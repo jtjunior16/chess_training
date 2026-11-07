@@ -1,6 +1,11 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-06 (position sources)
+- Decided the position sources: generated named-opening lines (up to move 10, both sides), plus Lichess puzzles and quiet positions from real Lichess games.
+- Learned: Lichess puzzles already carry phase and opening-name tags, but their opening puzzles are tactics, not theory. Most named opening lines end before move 10.
+- Agreed on one phase rule for all sources (opening by move number or theory, endgame by material).
+
 ## 2026-11-06 (later)
 - After a restart, Docker Desktop was running; Postgres 16 came up healthy, and Alembic connected (no migrations yet).
 - Created the public repo, pushed the scaffold commit; the first CI run passed (lint, gitleaks, migrations on a fresh DB, tests).
