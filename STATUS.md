@@ -1,23 +1,18 @@
 # Status
-_Last saved: 2026-11-06 17:22 · Overwritten by /project-format-toolkit:save-state at the end of each session._
+_Last saved: 2026-11-06 17:44 · Overwritten by /project-format-toolkit:save-state at the end of each session._
 
 ## Where things stand
-- Scaffolded with project-format-toolkit v1.2.0: app, Postgres (Docker + Alembic), PR template C, deploy none, Issues off.
-- `.venv` created; dependencies installed and locked in `uv.lock`; ruff passes.
-- Alembic initialised in `migrations/` (reads `DATABASE_URL`); no migrations written yet.
-- `.env` filled in by the user. Postgres not started yet: the Docker engine wasn't running, so the user is restarting the machine.
-- One local commit on `main` (the scaffold). No GitHub remote yet, nothing pushed.
+- Setup complete: app on Postgres 16 (Docker + Alembic), public repo at github.com/jtjunior16/chess_training, CI green.
+- Gates on: pre-commit + commit-msg hooks, squash-only merges, main protected (PR + passing `checks` job required).
+- No game code and no migrations yet. The game concept is in README ("Game concept").
 
 ## Unfinished work
-- Project-starter setup is paused at step 4 ("Turn on the gates"), after `.env`.
+- None.
 
 ## Next steps
-1. Make sure Docker Desktop is running (`docker info` succeeds), then `docker compose up -d`, wait for `docker compose ps` to show healthy, and run `uv run --env-file .env alembic upgrade head`.
-2. Ask the user public or private, then `gh repo create chess_training --<public|private> --source=. --remote=origin`, `git push -u origin main`, `gh run watch --exit-status`.
-3. Install the git hooks: `uv run pre-commit install --hook-type pre-commit --hook-type commit-msg`.
-4. Apply the squash-only repo settings and main branch protection (project-starter steps 6–7).
-5. Then start the first real task: the position + move + top-3-engine-moves game loop (see README "Game concept").
+1. Design the first game feature (announce the plan first): show a position, the player makes a move, reveal the engine's top 3 moves. Decide the stack: UI framework, chess library (e.g. python-chess), and engine (e.g. Stockfish).
+2. Write the first Alembic migration for the position bank (FEN + precomputed top-3 evals).
 
 ## Open questions
-- Public or private GitHub repo? (Branch protection is free only on public repos.)
 - Scoring thresholds for "made the position worse" are not decided yet.
+- Where the positions come from (a puzzle database, the user's own games, or generated ones).
