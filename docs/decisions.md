@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-06: specs/ folder for design docs
+Asked: Where should design docs from the separate design chat (Claude Desktop) live?
+Chose: a `specs/` folder in the repo, one Markdown file per feature (first: `specs/challenge_mode_spec.md`). A spec can be committed before it is scheduled for development.
+Why: Requirements sit where Claude Code can read them, versioned with the code, without starting implementation. Specs mark what is decided and what is still open, so open questions aren't settled by accident during coding.
+
 ## 2026-11-06: License GPL-3.0-or-later
 Asked: Is a GPL-3.0 license OK, and does it block monetising later?
 Chose: GPL-3.0-or-later for the whole project (LICENSE file, pyproject `license`).
