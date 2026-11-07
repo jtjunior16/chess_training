@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>chess_training</title>
+  <!-- chessground (GPL-3.0-or-later), pinned. Same board Lichess uses. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.2.1/assets/chessground.base.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.2.1/assets/chessground.brown.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.2.1/assets/chessground.cburnett.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <main>
+    <section class="board-col">
+      <div id="board" class="board"></div>
+    </section>
+    <section class="side">
+      <h1>Find the best move</h1>
+      <p id="meta" class="meta"></p>
+      <p id="prompt" class="prompt"></p>
+      <label class="only-move">
+        <input type="checkbox" id="only-move">
+        This is the only good move
+      </label>
+      <p class="hint">Tick it <em>before</em> you move, if you think every other move makes things worse.</p>
+      <div id="result" class="result" hidden></div>
+      <button id="next" type="button">Next position</button>
+    </section>
+  </main>
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

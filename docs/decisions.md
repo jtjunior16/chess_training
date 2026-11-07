@@ -1,6 +1,21 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-06: License GPL-3.0-or-later
+Asked: Is a GPL-3.0 license OK, and does it block monetising later?
+Chose: GPL-3.0-or-later for the whole project (LICENSE file, pyproject `license`).
+Why: python-chess and chessground are both GPL, so the project must be GPL-compatible anyway, and the repo is already public. GPL doesn't forbid charging money. A hosted site's server code doesn't have to be shared under GPL-3.0 (it would under AGPL); browser JavaScript and any downloadable app would. Going closed-source later would mean replacing those two libraries.
+
+## 2026-11-06: Stockfish pinned and downloaded by script, not winget
+Asked: Install Stockfish with winget, or put it in the venv?
+Chose: scripts/get_stockfish.py downloads the official Stockfish 19 release into the gitignored tools/stockfish/, verifying a SHA-256 checksum recorded in config.yaml. CI runs the same script. Engine settings: depth 18, 1 thread, 64 MB hash, multipv 3.
+Why: Stockfish is a compiled program, so it can't live in the venv as a Python package. Different versions give different scores, and we'll compare stored evals with live ones, so the version must match on every machine and in CI. winget is Windows-only, updates silently and installs to a machine-specific path, and CI's apt package would be a different version. Fixed depth with one thread keeps results reproducible.
+
+## 2026-11-06: App stack: FastAPI + chessground in a plain JS page
+Asked: Web page or desktop window, and which libraries?
+Chose: a web page served locally. FastAPI backend with python-chess (rules) and Stockfish (engine); the front end is one plain HTML/JS page using chessground 9.2.1 (Lichess's board) from the jsDelivr CDN, with no build step. Legal moves are computed on the server and sent to the board.
+Why: The user is fine with JavaScript and wants a browser board. Good boards already exist for the browser (drag-and-drop, arrows for showing the top moves), while desktop options need custom drawing, and a web page can be hosted later with few changes. Skipping React and build tools keeps the front end small while the game logic lives in Python.
+
 ## 2026-11-06: Where training positions come from, and how phases are labelled
 Asked: Should positions be generated, come from puzzles, or both? How do we label opening / middlegame / endgame?
 Chose:
