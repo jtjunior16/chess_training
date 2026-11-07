@@ -32,3 +32,6 @@ Thumbs.db
 
 # Claude Code: local-only settings
 .claude/settings.local.json
+
+# Downloaded tools (e.g. Stockfish via scripts/get_stockfish.py)
+tools/

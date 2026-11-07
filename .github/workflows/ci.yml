@@ -43,6 +43,9 @@ jobs:
       - name: Install project
         run: uv sync --locked
 
+      - name: Download Stockfish (pinned version, checksum-verified, same as local)
+        run: uv run python scripts/get_stockfish.py
+
       - name: Secret scan (gitleaks, same config as local hooks)
         run: uv run pre-commit run gitleaks --all-files
 

@@ -12,6 +12,20 @@ uv run --no-project python scripts/sync_env.py   # creates .env from .env.exampl
 docker compose up -d                       # local Postgres 16
 uv run --env-file .env alembic upgrade head
 ```
+```bash
+uv run python scripts/get_stockfish.py     # downloads the pinned Stockfish into tools/ (checksum-verified)
+```
+
+## Run the game
+```bash
+uv run uvicorn chess_training.app:app --reload
+```
+Then open http://localhost:8000. Each position takes about a second to analyse.
+
+Stack: FastAPI + python-chess + Stockfish (pinned in `config.yaml`) on the server, and a plain-JavaScript page with the [chessground](https://github.com/lichess-org/chessground) board (loaded from a CDN, no build step).
+
+## License
+GPL-3.0-or-later (see `LICENSE`). python-chess and chessground are GPL, so this project is too.
 
 ## Working with Claude Code
 This repo was scaffolded with the **project-format-toolkit** plugin. Say "start session" to begin and "I have to go" to save state. Run `/project-format-toolkit:toolkit` for every command.

@@ -1,0 +1,59 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #262421;
+  color: #e8e6e3;
+}
+main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 2rem;
+  justify-content: center;
+}
+.board {
+  width: min(90vw, 560px);
+  height: min(90vw, 560px);
+}
+.side {
+  width: 340px;
+}
+h1 {
+  font-size: 1.4rem;
+  margin-top: 0;
+}
+.meta {
+  color: #bababa;
+  text-transform: capitalize;
+}
+.only-move {
+  display: block;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+.hint,
+.small {
+  color: #9a9a9a;
+  font-size: 0.85rem;
+}
+.result {
+  background: #312e2b;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+.top li {
+  margin: 0.25rem 0;
+}
+.top li.green::marker { color: #15781b; }
+.top li.blue::marker { color: #003088; }
+.top li.yellow::marker { color: #e68f00; }
+.pv {
+  color: #9a9a9a;
+  font-size: 0.85rem;
+}
+button {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}

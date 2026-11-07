@@ -7,3 +7,17 @@ project:
 data:
   raw_dir: data/raw
   processed_dir: data/processed   # saved tables use Parquet
+
+engine:
+  # Stockfish is pinned so stored evaluations, live scoring and CI all use the same engine.
+  # Download or refresh it with: uv run python scripts/get_stockfish.py
+  version: sf_19
+  path: tools/stockfish/stockfish   # ".exe" is added on Windows
+  depth: 18                         # fixed depth + 1 thread keeps results reproducible
+  threads: 1
+  hash_mb: 64
+  multipv: 3                        # how many top moves to show
+  sha256:                           # release-asset checksums (match GitHub's published digests)
+    stockfish-windows-x86-64-universal.zip: 3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7
+    stockfish-linux-x86-64-universal.tar.gz: 9defc0d4e55d49c65a6d042f3e571a39fcea499ade6dbe741b53b8c65e03611f
+    stockfish-macos-universal.tar.gz: a1f0e3bcc5a6927a11fe6fc8e54a779754645f3c2bae2cf13420fd1957adaa77
