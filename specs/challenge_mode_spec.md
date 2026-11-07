@@ -1,5 +1,7 @@
 # Feature spec: Challenge mode
 
+**Status: ready** (designed; needs the position bank from [position_pipeline_spec.md](position_pipeline_spec.md) before it can be built)
+
 > For Claude Code. This spec comes from the design chat. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision below in the project's decision log (Question → Choice → Why).
 
 ## Summary

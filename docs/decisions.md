@@ -1,6 +1,16 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-06: Pipeline build order, and score every move instead of judging by "top 3"
+Asked: Build move acceptance before there are positions? What order for the position work? Is "top 3" the right rule for an OK move?
+Chose: Build order: position bank tables → phase labeller → opening importer → puzzle importer → batch analysis → game reads from the bank. Batch analysis scores every legal move and stores raw scores in a `position_moves` table. The acceptable-move rule (gap-based, in win %) is computed afterwards from the stored scores. Details in specs/position_pipeline_spec.md and specs/move_acceptance_spec.md (both draft).
+Why: G and L can't be tuned without real positions. A fixed top 3 is too generous when one move stands out and too strict when many moves are equal; the acceptable set should follow each position's own spread of scores. Storing raw scores makes the rule re-runnable without Stockfish. Lichess has about 5M puzzles, too many to analyse at several seconds each, so puzzles are sampled.
+
+## 2026-11-06: When to write a spec vs just build
+Asked: When does a feature get a spec file instead of going straight to a PR?
+Chose: Write a spec when decisions are still open, the work spans several PRs or sessions, it changes the data structure, the design chat should weigh in, or the order of steps matters. Otherwise (fully decided, one PR, easy to undo) just build it, with the PR description and a decisions.md line as the record. Specs carry a status line (draft / ready / in progress / done), and CLAUDE.md tells every session not to settle a spec's open questions while coding.
+Why: Specs hold plans that would otherwise scroll away in chat and keep open questions from being settled by accident, but they're overhead for small, fully decided changes.
+
 ## 2026-11-06: specs/ folder for design docs
 Asked: Where should design docs from the separate design chat (Claude Desktop) live?
 Chose: a `specs/` folder in the repo, one Markdown file per feature (first: `specs/challenge_mode_spec.md`). A spec can be committed before it is scheduled for development.
