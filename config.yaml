@@ -1,0 +1,9 @@
+# config.yaml: non-secret project parameters (committed, Claude may edit).
+# Secrets go in .env, never here. See universal-rules §5.
+
+project:
+  log_level: info
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed   # saved tables use Parquet

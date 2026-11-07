@@ -1,0 +1,34 @@
+# Secrets: never commit (universal-rules §5)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Data: keep raw/large data out of git by default
+data/raw/
+data/tmp/
+*.duckdb
+*.pkl
+*.pickle
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Claude Code: local-only settings
+.claude/settings.local.json

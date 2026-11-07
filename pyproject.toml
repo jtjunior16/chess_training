@@ -1,0 +1,29 @@
+[project]
+name = "chess_training"
+version = "0.1.0"
+description = "A chess training game: the player finds the best move in a position and is scored against the engine's top 3 moves, with a bonus for spotting 'only move' positions."
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.20.1",
+    "pandas>=3.1.1",
+    "psycopg[binary]>=3.3.8",
+    "pyarrow>=26.0.1",
+    "pyyaml>=6.0.3",
+    "sqlalchemy>=2.1.8",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

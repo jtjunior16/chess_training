@@ -1,0 +1,58 @@
+# CI: runs on every push to main and every PR, on a fresh machine (universal-rules §6).
+# Gates: PR title (PRs only) → secret scan (gitleaks) → lint (ruff) → tests (pytest).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, edited, synchronize, reopened]  # `edited`: re-check when the title changes
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          # CI-only throwaway credentials. Not secrets; this database dies with the job.
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v10.3.3   # setup-uv has no floating v10 tag: pin the full version
+
+      - name: PR title is a Conventional Commit (it becomes the squash commit on main)
+        if: github.event_name == 'pull_request'
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "$TITLE" > "$RUNNER_TEMP/pr-title"
+          uv run --no-project python scripts/check_commit_msg.py "$RUNNER_TEMP/pr-title"
+
+      - name: Install project
+        run: uv sync --locked
+
+      - name: Secret scan (gitleaks, same config as local hooks)
+        run: uv run pre-commit run gitleaks --all-files
+
+      - name: Lint and format check
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Apply migrations to a fresh database
+        run: uv run alembic upgrade head
+
+      - name: Tests
+        run: uv run pytest
