@@ -1,8 +1,8 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-09T09:22-08:00
+**Last revised:** 2026-11-09T10:04-08:00
 
-**Status: ready** (open questions settled in the design chat on 2026-11-09; see §7)
+**Status: in progress** (step 1, the position bank tables, built 2026-11-09; steps 2–6 to go)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 
@@ -39,7 +39,7 @@ Move acceptance (its own spec) comes after step 5.
 **`position_sources`**: one row per place a position came from (decided 2026-11-09).
 - `id`, `position_id` (links to `positions`)
 - `source`: opening / puzzle (game is added later)
-- `source_ref`: the line's PGN or the puzzle id
+- `source_ref`: for openings, the moves played to reach this position, as PGN movetext (e.g. `1. e4 c6 2. d4`); for puzzles, the puzzle id. (Decided 2026-11-09: one opening line yields a position after every half-move, so the full line's PGN would repeat and break the unique rule below. Lines that share their first moves share one source row for those positions.)
 - `fullmove_number`: as reached by this source
 - `moves_to_position`: the SAN moves leading here, plus the last move played. Stored now because it's cheap, and it lets the game later show how the position arose.
 - `opening_eco`: for opening sources

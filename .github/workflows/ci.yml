@@ -57,5 +57,13 @@ jobs:
       - name: Apply migrations to a fresh database
         run: uv run alembic upgrade head
 
+      - name: Migrations match the table definitions in chess_training/db.py
+        run: uv run alembic check
+
+      - name: Migrations roll back and re-apply cleanly
+        run: |
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+
       - name: Tests
         run: uv run pytest

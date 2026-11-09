@@ -19,11 +19,11 @@ if os.environ.get("DATABASE_URL"):
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+# Table definitions live in chess_training/db.py. `alembic check` compares them with the
+# migrated database, so the two can't drift apart.
+from chess_training.db import metadata  # noqa: E402
+
+target_metadata = metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
