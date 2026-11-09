@@ -1,6 +1,10 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-09 (spec timestamps)
+- The user added a `Last revised` timestamp to all three specs. Added rules to CLAUDE.md for keeping it current and for comparing an incoming spec against the repo copy. The spec log overview now shows the full timestamp.
+- move_acceptance_spec's timestamp (2026-11-06T18:43-08:00) is the time of its last content change, not today. Timestamps record when the content last changed, not when it was imported.
+
 ## 2026-11-09 (specs back from the design chat)
 - The user brought back updated position pipeline and challenge mode specs. The pipeline spec is now ready, with all its open questions settled, so development can start with the step 1 migration whenever the user says go.
 - Added `specs/spec_log.md` at the user's request, recording when each spec was created, updated and built.

@@ -1,5 +1,7 @@
 # Feature spec: Move acceptance (which moves are "OK" in a position)
 
+**Last revised:** 2026-11-06T18:43-08:00
+
 **Status: draft** (the design chat still needs to settle the open questions)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).

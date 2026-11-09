@@ -1,5 +1,7 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
+**Last revised:** 2026-11-09T09:22-08:00
+
 **Status: ready** (open questions settled in the design chat on 2026-11-09; see §7)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
