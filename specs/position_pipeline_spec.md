@@ -1,8 +1,8 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-09T10:04-08:00
+**Last revised:** 2026-11-09T10:59-08:00
 
-**Status: in progress** (step 1, the position bank tables, built 2026-11-09; steps 2–6 to go)
+**Status: in progress** (steps 1–2 built 2026-11-09: the position bank tables and the phase labeller; steps 3–6 to go)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 
@@ -60,10 +60,14 @@ Why: storing raw scores for every move means the acceptance rule, scoring thresh
 Why one row per position plus a sources table: no duplicates. Challenge mode's "already seen in this run" check has to treat the same board as one position, each position is scored only once, and a player's history later has one answer per position.
 
 ### 3. Phase labeller
-One rule for every source. The thresholds live in `config.yaml`.
-- **Opening:** the position comes from a named opening line, or it is before move 12.
-- **Endgame:** each side has at most a rook plus a bishop or knight of non-pawn material (Q=9, R=5, B/N=3, so ≤ 8 per side).
-- **Middlegame:** everything else.
+One rule for every source. The thresholds live in `config.yaml`. Checked in this order:
+1. **Endgame:** each side has at most **2 pieces** (queens, rooks, bishops, knights; kings and pawns never count), **or** at most 8 points of them (Q=9, R=5, B/N=3, so at most a rook plus a bishop or knight).
+2. **Opening:** the position comes from a named opening line, or it is before move 12.
+3. **Middlegame:** everything else.
+
+Decided 2026-11-09 (by the user, while building step 2):
+- **Endgame beats opening.** If a position meets both tests (e.g. an early puzzle after heavy trades), it's an endgame.
+- **Piece count as well as points.** With points alone, queen endings (9) and double-rook endings (10) would be labelled middlegame. Few pieces left means endgame, even if their points are high. With these numbers, any side within the points limit is also within the piece limit (three pieces are at least 9 points), so in practice the piece count decides. The points test matters only if the piece limit or piece values change.
 
 Lichess's own puzzle phase tags are not used as labels. A test or report compares them with ours as a sanity check.
 
