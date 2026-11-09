@@ -8,6 +8,18 @@ data:
   raw_dir: data/raw
   processed_dir: data/processed   # saved tables use Parquet
 
+phase:
+  # Phase labeller (specs/position_pipeline_spec.md §3). Checked in order: endgame, opening, middlegame.
+  # Pieces = queens, rooks, bishops, knights (kings and pawns never count).
+  endgame_max_pieces_per_side: 2   # endgame if each side has at most this many pieces...
+  endgame_max_points_per_side: 8   # ...or at most this many points of them
+  opening_before_move: 12          # opening if from a named line, or move number below this
+  piece_values:
+    queen: 9
+    rook: 5
+    bishop: 3
+    knight: 3
+
 engine:
   # Stockfish is pinned so stored evaluations, live scoring and CI all use the same engine.
   # Download or refresh it with: uv run python scripts/get_stockfish.py
