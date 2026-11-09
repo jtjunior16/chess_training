@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-09: Position pipeline open questions settled; spec log added
+Asked: (1) The five P1 open questions in the position pipeline spec. (2) How to keep track of when each spec was written, updated and built.
+Chose: (1) As answered in the design chat and recorded in specs/position_pipeline_spec.md §7: one row per unique position plus a `position_sources` table; opening names based on what has happened on the board (exact match, otherwise the nearest named ancestor; primary name plus a list of all names); a 5,000-puzzle sample after a quality filter, with at least 30 per motif theme and the rest spread across 200-point rating bands; two-pass scoring (depth 10 for every move, depth 18 for moves within 15 win-% of the best); the fingerprint filled by a backfill when challenge mode is built. The challenge mode spec now says only motif and mate-pattern tags count as themes, and a similar puzzle shares at least one of them. The pipeline spec is now **ready**. (2) `specs/spec_log.md`: an overview table, plus a dated history per spec (created / updated / status change / built, with the PR). CLAUDE.md tells every session to keep it up to date.
+Why: (1) See the "Why" lines in each spec. (2) Git history shows file changes but not what changed in the design or when a spec was built, and the user wants that in one place.
+
 ## 2026-11-06: Pipeline build order, and score every move instead of judging by "top 3"
 Asked: Build move acceptance before there are positions? What order for the position work? Is "top 3" the right rule for an OK move?
 Chose: Build order: position bank tables → phase labeller → opening importer → puzzle importer → batch analysis → game reads from the bank. Batch analysis scores every legal move and stores raw scores in a `position_moves` table. The acceptable-move rule (gap-based, in win %) is computed afterwards from the stored scores. Details in specs/position_pipeline_spec.md and specs/move_acceptance_spec.md (both draft).

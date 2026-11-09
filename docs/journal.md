@@ -1,6 +1,11 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-09 (specs back from the design chat)
+- The user brought back updated position pipeline and challenge mode specs. The pipeline spec is now ready, with all its open questions settled, so development can start with the step 1 migration whenever the user says go.
+- Added `specs/spec_log.md` at the user's request, recording when each spec was created, updated and built.
+- The branch-name guard hook reads everything after the new-branch flag up to the end of the command, so a branch-creation command chained with a semicolon gets blocked. Run branch creation as its own command.
+
 ## 2026-11-06 (specs and design workflow)
 - Set up a design workflow: the user discusses design in a Claude Desktop chat and drops the resulting specs into `specs/`. Added the challenge mode spec (from the user), plus position pipeline and move acceptance specs (drafts).
 - The user proposed replacing "top 3" with a statistical "acceptable moves" rule. Refined it into a gap-based cut on win % with a cap. Standard deviation collapses when many moves tie and lets slow chains drift, and win % makes a pawn matter less when the game is already decided.
