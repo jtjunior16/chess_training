@@ -1,6 +1,12 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-09 (phase labeller)
+- Built position pipeline step 2: `label_phase()` in `chess_training/phase.py`, with its numbers in the `phase:` section of `config.yaml` and 16 tests.
+- Planning found three gaps in spec §3: opening vs endgame overlap, queen endings and double-rook endings. The user settled all three: endgame wins, plus a limit of 2 pieces per side.
+- Learned: with a piece limit of 2, the 8-point test is redundant (three pieces are at least 9 points). Kept it so the config stays flexible.
+- The user asked that questions restate any shorthand (like "step 2"), since it isn't obvious without scrolling back. Saved as a standing preference.
+
 ## 2026-11-09 (position bank tables)
 - Built position pipeline step 1: migration 0001 with `positions`, `position_sources` and `position_moves`, table definitions in `chess_training/db.py`, and 14 schema tests that run inside rolled-back transactions, so local data is never touched. CI now also runs `alembic check` and a downgrade/upgrade round trip.
 - Docker Desktop wouldn't start (`ERROR_NO_SYSTEM_RESOURCES`): committed memory was 24 of 29 GB, and WSL2 tries to reserve half the RAM (about 8 GB). A stuck `vmmem` process survived `wsl --shutdown --force`. Fixed with `~/.wslconfig` (memory=3GB, swap=1GB) and a reboot.

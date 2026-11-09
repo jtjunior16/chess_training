@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-09: Phase labels: endgame beats opening, and a piece count joins the points rule
+Asked: The spec's phase rule (§3) didn't say which label wins when a position meets both the opening and the endgame test. Its points-only endgame rule (at most 8 points per side) labelled queen endings (9) and double-rook endings (10) as middlegame.
+Chose (user): Endgame is checked first and beats opening. A side also counts as endgame material with at most **2 pieces** (queens, rooks, bishops, knights), even if their points are higher. The limit was picked from 1, 2 or 3 per side: 1 would still leave double-rook endings as middlegame, and 3 would call positions like Q+R+B v Q+R+N endgames. All numbers are in `config.yaml`.
+Why: Few pieces left is what makes an endgame, more than the points they're worth. Note: with these numbers the points test never adds a case the piece count doesn't already cover, because three pieces are at least 9 points. It's kept in case the limits change.
+
 ## 2026-11-09: Opening source_ref is the moves played so far; position bank column types
 Asked: (1) The spec made (`source`, `source_ref`) unique, with an opening's `source_ref` being "the line's PGN". But one line produces a position after every half-move, so they would all share it and break the rule. (2) Which column types to use for the position bank.
 Chose: (1) Option A (user's choice): an opening's `source_ref` is the moves played to reach that position, as PGN movetext. The unique rule stays as written. Rejected: B, keeping the full line's PGN and widening the rule to include `position_id` (about 1,500 source rows for 1.e4 alone); C, deferring to the design chat. (2) Fixed-value columns (`side_to_move`, `phase`, `source`) are text with CHECK constraints, not Postgres enums. Lists are `text[]`. `pawn_fingerprint` is JSONB as a placeholder until challenge mode defines it. CHECK constraints make sure exactly one of `score_cp` and `score_mate` is set, and that the fingerprint and its version are filled together. Child rows cascade on delete. Tables are defined in `chess_training/db.py` and Alembic targets them, so CI's `alembic check` catches drift.

@@ -8,7 +8,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | Spec | Created | Last revised | Status | Built |
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-09T09:22-08:00 | ready | not started (needs the position bank) |
-| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-09T10:04-08:00 | in progress | step 1 of 6 (tables, #9) |
+| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-09T10:59-08:00 | in progress | steps 1–2 of 6 (tables #9, phase labeller #10) |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-06T18:43-08:00 | draft | not started |
 
 ## challenge_mode_spec.md
@@ -23,6 +23,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-09T10:59-08:00 | **Built step 2:** the phase labeller (`chess_training/phase.py`). Spec §3 revised with the user's decisions: endgame is checked first and beats opening, and a side with at most 2 pieces counts towards an endgame as well as one with at most 8 points. | in progress | #10 |
 | 2026-11-09T10:04-08:00 | **Built step 1:** the `positions`, `position_sources` and `position_moves` tables (migration 0001). Spec revised: an opening's `source_ref` is the moves played to reach the position (user's decision, option A), because the full line's PGN would break the unique rule. | in progress | #9 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-09T09:22-08:00, the time of the design chat's last content change). No other change. | ready | #8 |
 | 2026-11-09 | Updated from the design chat, settling every open question: one row per unique position plus a `position_sources` table, opening names based on the moves actually played (primary name plus a list of all names), a filtered puzzle sample of 5,000 with at least 30 per motif theme, two-pass engine scoring (depth 10, then depth 18 near the best move), and the fingerprint filled in later. | ready | #7 |
