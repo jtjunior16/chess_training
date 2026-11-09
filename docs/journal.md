@@ -1,6 +1,12 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-09 (position bank tables)
+- Built position pipeline step 1: migration 0001 with `positions`, `position_sources` and `position_moves`, table definitions in `chess_training/db.py`, and 14 schema tests that run inside rolled-back transactions, so local data is never touched. CI now also runs `alembic check` and a downgrade/upgrade round trip.
+- Docker Desktop wouldn't start (`ERROR_NO_SYSTEM_RESOURCES`): committed memory was 24 of 29 GB, and WSL2 tries to reserve half the RAM (about 8 GB). A stuck `vmmem` process survived `wsl --shutdown --force`. Fixed with `~/.wslconfig` (memory=3GB, swap=1GB) and a reboot.
+- gitleaks flagged a FEN stored in a variable named `START_KEY` as an API key (a false positive triggered by the word "KEY"). Renamed the variable rather than allow-listing it.
+- Spotted a spec conflict: the opening `source_ref` (the line's PGN) would break the unique rule on (`source`, `source_ref`). The user chose to use the moves played so far.
+
 ## 2026-11-09 (spec timestamps)
 - The user added a `Last revised` timestamp to all three specs. Added rules to CLAUDE.md for keeping it current and for comparing an incoming spec against the repo copy. The spec log overview now shows the full timestamp.
 - move_acceptance_spec's timestamp (2026-11-06T18:43-08:00) is the time of its last content change, not today. Timestamps record when the content last changed, not when it was imported.
