@@ -6,41 +6,18 @@ so the local position bank is never touched. Locally: uv run --env-file .env pyt
 
 from __future__ import annotations
 
-import os
-
 import pytest
-from sqlalchemy import create_engine, func, insert, inspect, select, text
+from sqlalchemy import func, insert, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
 from chess_training.db import metadata, position_moves, position_sources, positions
 
-AFTER_1_E4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -"
+# Rows that no importer produces, so the tests never collide with an imported bank.
+BARE_KINGS = "8/8/8/4k3/8/8/8/4K3 b - -"
+TEST_REF = "test-only ref"
 
 
-@pytest.fixture(scope="module")
-def engine():
-    url = os.environ.get("DATABASE_URL")
-    if not url:
-        msg = "DATABASE_URL not set. Run: uv run --env-file .env pytest"
-        if os.environ.get("CI"):
-            pytest.fail(msg)
-        pytest.skip(msg)
-    eng = create_engine(url)
-    yield eng
-    eng.dispose()
-
-
-@pytest.fixture
-def conn(engine):
-    with engine.connect() as c:
-        outer = c.begin()
-        try:
-            yield c
-        finally:
-            outer.rollback()
-
-
-def add_position(conn, fen_key=AFTER_1_E4, **kw):
+def add_position(conn, fen_key=BARE_KINGS, **kw):
     values = {
         "fen": fen_key + " 0 1",
         "fen_key": fen_key,
@@ -50,7 +27,7 @@ def add_position(conn, fen_key=AFTER_1_E4, **kw):
     return conn.execute(insert(positions).values(values).returning(positions.c.id)).scalar_one()
 
 
-def add_source(conn, position_id, source_ref="1. e4", **kw):
+def add_source(conn, position_id, source_ref=TEST_REF, **kw):
     values = {
         "position_id": position_id,
         "source": "opening",
@@ -120,8 +97,8 @@ def test_fingerprint_and_version_together(conn):
 def test_source_and_ref_are_unique(conn):
     pid = add_position(conn)
     add_source(conn, pid)
-    assert rejects(conn, add_source, pid)  # same (opening, "1. e4")
-    add_source(conn, pid, source="puzzle", source_ref="1. e4")  # other source: fine
+    assert rejects(conn, add_source, pid)  # same (opening, TEST_REF)
+    add_source(conn, pid, source="puzzle", source_ref=TEST_REF)  # other source: fine
 
 
 def test_source_must_be_known(conn):
