@@ -1,8 +1,8 @@
 # Feature spec: Move acceptance (which moves are "OK" in a position)
 
-**Last revised:** 2026-11-11T13:20-08:00
+**Last revised:** 2026-11-11T13:46-08:00
 
-**Status: draft** (the design chat still needs to settle the open questions)
+**Status: ready** (decided 2026-11-11: build now with the placeholders under **Open questions**; they're decided later, see the note there)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 >
@@ -83,6 +83,8 @@ This replaces the project's original "show the top 3 arrows" display.
 Why: the user's decision. The old top 3 disagreed with the acceptable set: in an only-move position, moves 2 and 3 got arrows although they weren't acceptable; with many acceptable moves, a player's acceptable 7th-ranked move had no arrow and looked wrong. Arrows for every acceptable move (up to 15 or more) would clutter the board, hence the cap and the toggle.
 
 ## Open questions (do not decide. Use the placeholder and make it configurable)
+
+> **To decide later.** The spec was marked ready with these still open (the user's decision, 2026-11-11). **G** and **L** are tuned in a later design chat using the §6 tuning report, run after the full analysis run (position pipeline step 6); until then build with the placeholders. The caching question is a performance detail: measure it once built and report back.
 
 | Question | Placeholder for now |
 |---|---|

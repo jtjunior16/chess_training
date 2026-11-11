@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Move acceptance is ready to build with its placeholders
+Asked: Move acceptance still had G, L and the caching question open. Should building wait for them?
+Chose (user, in the design chat; spec Last revised 2026-11-11T13:46-08:00): No. The spec is **ready**. Build with G = 5 and L = 6 as placeholders, and tune them in a later design chat using the §6 tuning report once the full analysis has run. Caching the acceptable-set size is a performance detail: measure it once built and report back.
+Why: G and L can only be tuned with real acceptable-set sizes, which need the tuning report, which needs move acceptance built. Waiting would block everything.
+
 ## 2026-11-11: Scoring is accuracy %, not points (new scoring spec from the design chat)
 Asked: How the player's progress is measured. This was the old P3 question: points for acceptable moves and for moves outside the set, scoring the "only good move" claim, and an overall points system.
 Chose (user, in the design chat; specs/scoring_spec.md, Last revised 2026-11-11T13:29-08:00):

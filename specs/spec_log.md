@@ -10,7 +10,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
 | [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T13:29-08:00 | draft | not started (needs move acceptance and a table for attempts) |
-| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | draft | not started |
+| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T13:46-08:00 | ready | not started |
 
 ## challenge_mode_spec.md
 
@@ -49,6 +49,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:20 copy). Build now with the G and L placeholders. They are tuned in a later design chat from the §6 tuning report, run after the full analysis. Caching the set size is a performance detail to measure once built. | ready | #21 |
 | 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Three open questions decided. Forced mates (new §7): when the best move forces mate, only moves that also force mate are acceptable, at any length. What the player sees (new §8): arrows for up to 3 acceptable moves, a verdict on the player's move, a count line, a "show all" toggle, and in only-move positions the 2nd-best move marked with what it loses. Challenge mode passes on the acceptable set (§4). Still open: G, L, and whether to cache the set size. | draft | #20 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-06T18:43-08:00, the time of the design chat's last content change). No other change. | draft | #8 |
 | 2026-11-06 | Created: a gap-based acceptable-move rule in win %, replacing the fixed "top 3". G, L, mate handling and the challenge-mode pass rule are still open. | draft | #5 |
@@ -58,7 +59,7 @@ _Every open question across the specs, for the design chat. In priority order. E
 
 **Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), and, from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3). The position pipeline spec has no open questions left.
 
-### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), draft). Blocks points.
+### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), **ready** since 13:46: build with placeholders)
 Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
 | Question | Placeholder now |
 |---|---|
