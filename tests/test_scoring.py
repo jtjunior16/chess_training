@@ -79,7 +79,9 @@ def test_config_values():
     assert "fork" in s.motif and "middlegame" not in s.motif
 
 
-@pytest.mark.parametrize("size, label", [(1, "1"), (2, "2-4"), (4, "2-4"), (5, "5+"), (30, "5+")])
+@pytest.mark.parametrize(
+    "size, label", [(1, "only-move"), (2, "2-4"), (4, "2-4"), (5, "5+"), (30, "5+")]
+)
 def test_difficulty_buckets(size, label):
     assert ScoringSettings.from_config().difficulty(size) == label
 
@@ -200,7 +202,7 @@ def test_breakdowns(conn, sc):
     assert b["puzzle theme"]["fork"]["all_time"]["attempts"] == 2
     assert set(b["side"]) == {"White", "Black"}
     assert set(b["phase"]) == {"opening", "endgame"}
-    assert set(b["difficulty"]) == {"1"}
+    assert set(b["difficulty"]) == {"only-move"}
 
 
 # ---------------------------------------------------------------- recompute (§7 placeholder)
@@ -210,9 +212,9 @@ def test_recompute_after_g_changes(conn, sc):
     # 0 vs -100 cp is a 9.1 win-% gap: not acceptable at G = 5, acceptable at G = 10, L = 10.
     pid = add_position(conn, "sc-recompute", [("a", 0, None), ("b", -100, None)])
     aid = rec(conn, pid, "b", sc).id
-    assert recompute_attempts(conn, ACC, sc, engine_version=VERSION) == 0
+    assert recompute_attempts(conn, ACC, sc, engine_version=VERSION) == (0, 0)
     loose = AcceptanceSettings(G=10, L=10)
-    assert recompute_attempts(conn, loose, sc, engine_version=VERSION) >= 1
+    assert recompute_attempts(conn, loose, sc, engine_version=VERSION) == (1, 0)
     assert conn.execute(select(attempts.c.result).where(attempts.c.id == aid)).scalar_one() == (
         "acceptable"
     )
@@ -227,5 +229,35 @@ def test_stats_endpoint_returns_the_structure():
     from chess_training.app import get_stats as endpoint
 
     s = endpoint()
-    assert set(s) == {"overall", "breakdowns", "settings"}
+    assert set(s) == {"overall", "breakdowns", "settings", "skipped_unscored"}
     assert set(s["breakdowns"]) == {"phase", "opening family", "side", "difficulty", "puzzle theme"}
+
+
+def test_recompute_after_blunder_line_changes(conn, sc):
+    pid = add_position(conn, "sc-bl", [("a", 0, None), ("near", -100, None)])  # 9.1 below
+    aid = rec(conn, pid, "near", sc).id
+    strict = replace(sc, blunder_line=5)
+    assert recompute_attempts(conn, ACC, strict, engine_version=VERSION) == (1, 0)
+    assert conn.execute(select(attempts.c.result).where(attempts.c.id == aid)).scalar_one() == (
+        "blunder"
+    )
+
+
+def test_unscored_positions_are_skipped_not_fatal(conn, sc):
+    pid = add_position(conn, "sc-upgrade", [("a", 0, None), ("b", -600, None)])
+    rec(conn, pid, "a", sc)
+    rec(conn, pid, "b", sc)
+    # A new engine version with no scores for this position yet (e.g. after an upgrade):
+    s = stats(conn, ACC, sc, engine_version="not-analysed-yet")
+    assert s["skipped_unscored"] >= 2
+    assert "Skipped" in render(s)
+    changed, skipped = recompute_attempts(conn, ACC, sc, engine_version="not-analysed-yet")
+    assert skipped >= 2
+
+
+def test_difficulty_buckets_through_stats(conn, sc):
+    two = add_position(conn, "sc-two", [("a", 20, None), ("b", 20, None), ("c", -600, None)])
+    six = add_position(conn, "sc-six", [(f"m{i}", 20, None) for i in range(6)])
+    rec(conn, two, "a", sc)
+    rec(conn, six, "m0", sc)
+    assert set(get_stats(conn, sc)["breakdowns"]["difficulty"]) == {"2-4", "5+"}

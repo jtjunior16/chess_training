@@ -69,7 +69,9 @@ class ScoringSettings:
         lo = 1
         for hi in self.difficulty_buckets:
             if size <= hi:
-                return str(hi) if lo == hi else f"{lo}-{hi}"
+                if lo == hi:
+                    return "only-move" if hi == 1 else str(hi)
+                return f"{lo}-{hi}"
             lo = hi + 1
         return f"{lo}+"
 
@@ -83,6 +85,13 @@ def _acceptance(conn: Connection, position_id: int, acc: AcceptanceSettings, ver
     if not moves:
         raise ValueError(f"Position {position_id} has no stored scores for {version}")
     return acceptable_set(moves, acc)
+
+
+def _try_acceptance(conn, position_id, acc, version) -> Acceptance | None:
+    """None when the position has no scores for this engine version (e.g. after an engine
+    upgrade, before it is re-analysed): such attempts are skipped and counted, not fatal."""
+    moves = load_moves(conn, position_id, version)
+    return acceptable_set(moves, acc) if moves else None
 
 
 # ---------------------------------------------------------------- recording
@@ -150,8 +159,11 @@ def recompute_attempts(
     acceptance_settings: AcceptanceSettings | None = None,
     scoring_settings: ScoringSettings | None = None,
     engine_version: str | None = None,
-) -> int:
-    """Re-judge every stored attempt with the current rule and scores. Returns rows changed."""
+) -> tuple[int, int]:
+    """Re-judge every stored attempt with the current rule and scores.
+
+    Returns (attempts changed, attempts skipped because their position has no scores for
+    the current engine version yet). Skipped attempts keep their stored result."""
     acc_s, sc_s = _settings(acceptance_settings, scoring_settings)
     version = engine_version or load_config()["engine"]["version"]
     rows = conn.execute(
@@ -164,12 +176,15 @@ def recompute_attempts(
             attempts.c.engine_version,
         )
     ).all()
-    cache: dict[int, Acceptance] = {}
-    changed = 0
+    cache: dict[int, Acceptance | None] = {}
+    changed = skipped = 0
     for r in rows:
         if r.position_id not in cache:
-            cache[r.position_id] = _acceptance(conn, r.position_id, acc_s, version)
+            cache[r.position_id] = _try_acceptance(conn, r.position_id, acc_s, version)
         acc = cache[r.position_id]
+        if acc is None:
+            skipped += 1
+            continue
         kind = miss_kind(acc, r.uci, sc_s.blunder_line)
         loss = judge(acc, r.uci).win_loss
         if (kind, round(loss, 6), version) != (r.result, round(r.win_loss, 6), r.engine_version):
@@ -179,7 +194,7 @@ def recompute_attempts(
                 .values(result=kind, win_loss=loss, engine_version=version)
             )
             changed += 1
-    return changed
+    return changed, skipped
 
 
 # ---------------------------------------------------------------- stats
@@ -245,8 +260,11 @@ def load_rows(
     acc_s: AcceptanceSettings,
     sc_s: ScoringSettings,
     engine_version: str,
-) -> list[_Row]:
-    """Counted attempts (challenge repeats left out, §5), oldest first, with their groups."""
+) -> tuple[list[_Row], int]:
+    """Counted attempts (challenge repeats left out, §5), oldest first, with their groups.
+
+    Also returns how many counted attempts were skipped because their position has no
+    scores for `engine_version` (difficulty and only-move can't be worked out)."""
     q = (
         select(
             attempts.c.position_id,
@@ -270,9 +288,15 @@ def load_rows(
             )
         ):
             themes[pid].update(t for t in (tags or []) if t in sc_s.motif)
-    sizes = {pid: _acceptance(conn, pid, acc_s, engine_version).size for pid in ids}
-    rows = []
+    sizes = {}
+    for pid in ids:
+        acc = _try_acceptance(conn, pid, acc_s, engine_version)
+        sizes[pid] = acc.size if acc else None
+    rows, skipped = [], 0
     for r in raw:
+        if sizes[r.position_id] is None:
+            skipped += 1
+            continue
         family = r.opening_name.split(":")[0].strip() if r.opening_name else None
         rows.append(
             _Row(
@@ -288,7 +312,7 @@ def load_rows(
                 },
             )
         )
-    return rows
+    return rows, skipped
 
 
 def stats(
@@ -304,7 +328,7 @@ def stats(
     """
     acc_s, sc_s = _settings(acceptance_settings, scoring_settings)
     version = engine_version or load_config()["engine"]["version"]
-    rows = load_rows(conn, acc_s, sc_s, version)
+    rows, skipped = load_rows(conn, acc_s, sc_s, version)
     breakdowns: dict[str, dict] = {}
     for b in BREAKDOWNS:
         members: dict[str, list[_Row]] = {}
@@ -315,6 +339,7 @@ def stats(
     return {
         "overall": _group_figures(rows, sc_s),
         "breakdowns": breakdowns,
+        "skipped_unscored": skipped,  # attempts on positions not scored by this engine
         "settings": {
             "G": acc_s.G,
             "L": acc_s.L,
@@ -362,6 +387,11 @@ def render(s: dict) -> str:
         f"Overall, all-time: {_fmt(s['overall']['all_time'])}",
         f"Overall, recent:   {_fmt(s['overall']['recent'])}",
     ]
+    if s.get("skipped_unscored"):
+        lines.append(
+            f"(Skipped {s['skipped_unscored']} attempts on positions without scores for the "
+            "current engine version: re-run the analysis, then --recompute.)"
+        )
     for b, groups in s["breakdowns"].items():
         lines += ["", f"By {b}:"]
         if not groups:
@@ -382,7 +412,8 @@ def main() -> None:
     db = get_engine()
     if args.recompute:
         with db.begin() as conn:
-            print(f"Recomputed: {recompute_attempts(conn)} attempts changed.")
+            changed, skipped = recompute_attempts(conn)
+            print(f"Recomputed: {changed} attempts changed, {skipped} skipped (no scores).")
     with db.connect() as conn:
         print(render(stats(conn)))
 

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import random
 from contextlib import asynccontextmanager
+from functools import cache
 from pathlib import Path
 
 import chess
@@ -14,6 +15,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from sqlalchemy.exc import SQLAlchemyError
 
 from chess_training.engine import Engine
 from chess_training.positions import BY_ID, SAMPLES
@@ -126,13 +128,21 @@ def post_move(req: MoveRequest, request: Request) -> dict:
     }
 
 
+@cache
+def _db():
+    """One SQLAlchemy engine (and connection pool) for the app, created on first use."""
+    from chess_training.db import get_engine
+
+    return get_engine()
+
+
 @app.get("/api/stats")
 def get_stats() -> dict:
     """The player's accuracy figures (specs/scoring_spec.md). Needs the database."""
-    from chess_training.db import get_engine
-
     try:
-        with get_engine().connect() as conn:
+        with _db().connect() as conn:
             return scoring_stats(conn)
     except RuntimeError as exc:  # DATABASE_URL not set
         raise HTTPException(503, str(exc)) from exc
+    except SQLAlchemyError as exc:  # database down or unreachable
+        raise HTTPException(503, f"Database unavailable: {type(exc).__name__}") from exc

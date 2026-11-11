@@ -89,6 +89,8 @@ Small design choices (they don't block the build):
 | Where the figures are shown | One Stats page: overall, then one table per breakdown |
 | Should a wrong or missed claim also fail a challenge position? | No |
 
+Note from building (a question for the design chat, not a placeholder): the **recent spotting rate** needs 10 only-move positions within the last 50 attempts of a group. Openings are about 15% only-move positions, so 50 opening attempts hold about 7, and the recent opening spotting rate will usually show "not enough data yet". Options: a larger window for claim figures, or a lower minimum for them.
+
 **For the design chat to fix:** move acceptance's open-questions note says the tuning report runs after "the full analysis run (position pipeline step 6)". The full analysis run belongs to step 5. Step 6 is the game reading from the bank.
 
 ### 3. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)

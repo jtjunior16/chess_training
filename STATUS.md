@@ -12,7 +12,7 @@ _Last saved: 2026-11-11 11:31 · Overwritten by /project-format-toolkit:save-sta
 
 ## Next steps
 1. Full analysis run: `uv run --env-file .env python -m chess_training.analysis` (about 4–5 hours in total, uses 10 of 12 cores). It can run in sessions of any length: Ctrl+C stops it cleanly, and the same command continues.
-2. Then: re-run `python -m chess_training.acceptance_report` on the full bank for the design chat to tune G and L (tune on the opening grid), then position pipeline step 6 (the game reads from the bank: verdicts and arrows, recording attempts, the Stats page) (the game reads from the bank; it must skip the 2 checkmate positions that end the Fool's Mate and Sea-Cadet Mate lines) → move acceptance (G and L are placeholders in `config.yaml`).
+2. Then: re-run `python -m chess_training.acceptance_report` on the full bank for the design chat to tune G and L (tune on the opening grid), then position pipeline step 6: the game reads from the bank, with verdicts and arrows (move acceptance §8), recording attempts and the Stats page. It must skip the 2 checkmate positions that end the Fool's Mate and Sea-Cadet Mate lines.
 
 ## Open questions
 Sent to the design chat in priority order:
