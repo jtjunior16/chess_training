@@ -1,6 +1,6 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-11T12:03-08:00
+**Last revised:** 2026-11-11T12:21-08:00
 
 **Status: in progress** (steps 1–5 built: the position bank tables and the phase labeller on 2026-11-09; the opening and puzzle importers and batch analysis on 2026-11-11. The full analysis run and step 6 are still to go)
 
@@ -138,6 +138,7 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
   - Opening positions cost the most because many moves stay within 15 win-% of the best.
   - Two positions have no legal moves: the checkmates that end the named lines "Barnes Opening: Fool's Mate" and "Scotch Game: Sea-Cadet Mate". Analysis skips them and reports them. The game must never serve them (step 6).
   - The stored `depth` is the depth Stockfish reports reaching, which must be at least the target. A position that fails is logged and left pending, and the run carries on.
+  - **Stop and resume (2026-11-11, the user's request):** the full run can be done in sessions of any length. Ctrl+C (or Ctrl+Break) stops the workers and their Stockfish processes and prints the progress so far. A save in progress is rolled back as a whole. Running the same command again continues.
 
 ### 7. Pawn fingerprint timing (decided 2026-11-09)
 `pawn_fingerprint` and `pawn_fingerprint_version` exist from step 1, nullable, and stay empty. When challenge mode is built, a one-time **backfill** fills every existing row, and the importers compute it at import from then on. The fingerprint is defined in [challenge_mode_spec.md](challenge_mode_spec.md).

@@ -1,6 +1,12 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (stop and resume the analysis)
+- The user wants to run the 4–5 hour analysis in short sessions. It was already resumable, but Ctrl+C with 10 worker processes on Windows could leave a mess (tracebacks, a hang, orphaned Stockfish processes).
+- Now: workers ignore Ctrl+C, Stockfish runs in its own process group, and the main process catches Ctrl+C (and Ctrl+Break), terminates the pool and prints "Stopped. … X of 12,715 done. Run the same command again to continue."
+- Tested on this machine with a real Ctrl+Break after 25 s: it exited in 5 s with code 0, no stockfish.exe was left, the 17 positions finished were saved, and a restart carried on (167 → 172).
+- The time estimate from a short session runs high (6.9 h from a 30 s session), because it includes starting 10 engines.
+
 ## 2026-11-11 (batch analysis)
 - Built position pipeline step 5: `chess_training/analysis.py` (two-pass Stockfish scoring, 10 parallel workers, resumable) and `chess_training/winpct.py`.
 - Timing on the first 100 positions: 98 s wall time. 50 more took 56 s. The review pointed out that the simple estimate (3.4 h) ignored the bank's mix: 61% openings, against 55% in the sample. Weighted by what is left, it's about 4–5 hours. Opening positions average 13.5 s, because about 14 of their 32 moves stay within 15 win-% of the best and get the depth-18 pass. Puzzles average 1–3 s, with about 2 moves sent deep.
