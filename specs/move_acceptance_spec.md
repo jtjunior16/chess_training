@@ -1,8 +1,8 @@
 # Feature spec: Move acceptance (which moves are "OK" in a position)
 
-**Last revised:** 2026-11-11T13:46-08:00
+**Last revised:** 2026-11-11T14:05-08:00
 
-**Status: ready** (decided 2026-11-11: build now with the placeholders under **Open questions**; they're decided later, see the note there)
+**Status: in progress** (2026-11-11: the rule (§2, §7), the verdict (§4) and the tuning report (§6) are built in `chess_training/acceptance.py` and `acceptance_report.py`. The §8 display comes with the game reading from the bank (position pipeline step 6). G and L are still placeholders, see the note under **Open questions**)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 >
@@ -60,6 +60,15 @@ A command that computes acceptable sets for the whole bank and prints:
 - the positions where the best move is a forced mate (§7), and the positions where every move gets mated
 
 Use it to tune G and L with real data before awarding points.
+
+Built 2026-11-11 as `python -m chess_training.acceptance_report`. It only covers positions with stored scores, so it runs while the analysis is going. Additions while building (Claude's, flagged to the user):
+- how non-acceptable moves split around `scoring.blunder_line` (scoring spec §6 asked for this);
+- a G × L grid (G 3/4/5/6/8 × L 4/6/7.5) of only-move share and median set size, both for all positions and for **opening positions only**. Puzzles are about 99% only-move positions whatever G and L are, so the opening grid is the one that shows what G and L change.
+
+First run on partial data (4,604 of 12,715 positions, G = 5, L = 6):
+- **Puzzles:** 99% are only-move positions, and every non-acceptable move is a blunder (more than 15 win-% lost).
+- **Openings:** 15–16% are only-move positions, the median set size is 8, and a third of non-acceptable moves are close misses.
+- **Opening grid:** L drives the set size (median 5 / 8 / 11 for L = 4 / 6 / 7.5), and G drives the only-move share (23% at G = 3 down to 9–12% at G = 8).
 
 ### 7. Forced mates (decided 2026-11-11)
 If the best move forces mate (`score_mate` > 0 from the mover's point of view), the acceptable set is **exactly the moves that also force mate, at any length**. G and L don't apply. Every move that doesn't force mate is not acceptable, however big its score.

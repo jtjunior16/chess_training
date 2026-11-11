@@ -167,7 +167,13 @@ analysis:
   workers: 10          # parallel Stockfish processes, 1 thread each (engine.threads)
 
 move_acceptance:
-  # specs/move_acceptance_spec.md (status: draft). PLACEHOLDERS: G and L are open questions
-  # there. L is read now only for the analysis check deep_margin >= 2 x L.
+  # specs/move_acceptance_spec.md (status: ready). PLACEHOLDERS: G and L are still open
+  # there and get tuned from the tuning report (python -m chess_training.acceptance_report).
+  # L must stay <= analysis.deep_margin / 2 (checked when the analysis starts).
   G: 5                 # break size, win-% points (placeholder)
   L: 6                 # cap below the best move, win-% points (placeholder)
+
+scoring:
+  # specs/scoring_spec.md (status: ready). PLACEHOLDER: blunder_line is an open question there,
+  # settled together with G and L. Must stay <= analysis.deep_margin.
+  blunder_line: 15     # win-% points below the best move: up to here a close miss, beyond a blunder
