@@ -1,6 +1,6 @@
 # Feature spec: Scoring (how the player's progress is measured)
 
-**Last revised:** 2026-11-11T13:46-08:00
+**Last revised:** 2026-11-11T14:16-08:00
 
 **Status: ready** (decided 2026-11-11: build now with the placeholders under **Open questions**; they're decided later, see the note there)
 
@@ -69,7 +69,8 @@ Why: the user's decision. A challenge repeat comes minutes after the player saw 
 A move that isn't acceptable is one of two kinds, by how far its win % is below the best move's:
 - **Close miss:** at most **blunder_line** win-% points below the best move.
 - **Blunder:** more than **blunder_line** below the best move.
-- When the best move forces mate (see [move_acceptance_spec.md](move_acceptance_spec.md) §7), a non-mating move is measured the same way, from the mate's win % (≈100).
+- **When the best move forces mate** (see [move_acceptance_spec.md](move_acceptance_spec.md) §7), a move that doesn't mate is **always a blunder**, however big its score and wherever `blunder_line` is (decided 2026-11-11, the user). Its win-% loss is still measured from the mate's win % (≈100) and stored.
+  - Why: under win % a big non-mating move (+8 ≈ 95%) is only about 5 points below a mate (≈100), so it would count as a close miss. But missing a forced mate is exactly the tactic the player failed to see.
 
 Every accuracy figure is shown as three shares that add up to 100%, e.g. "Endgame: 51% acceptable · 30% close misses · 19% blunders", with the all-time/recent split (§2) and the breakdowns (§3). `blunder_line` lives in `config.yaml`.
 

@@ -153,6 +153,25 @@ def judge(acceptance: Acceptance, uci: str) -> Verdict:
     raise ValueError(f"{uci} is not a scored move in this position")
 
 
+ACCEPTABLE, CLOSE_MISS, BLUNDER = "acceptable", "close miss", "blunder"
+
+
+def miss_kind(acceptance: Acceptance, uci: str, blunder_line: float) -> str:
+    """Acceptable, close miss or blunder (scoring_spec §6).
+
+    A non-acceptable move is a close miss if it is at most `blunder_line` win-% points below
+    the best move, otherwise a blunder. When the best move forces mate, a move that doesn't
+    mate is always a blunder (decided 2026-11-11), because win % puts +8 only about 5 points
+    below a mate.
+    """
+    v = judge(acceptance, uci)
+    if v.acceptable:
+        return ACCEPTABLE
+    if acceptance.forced_mate:
+        return BLUNDER
+    return CLOSE_MISS if v.win_loss <= blunder_line else BLUNDER
+
+
 def load_moves(conn: Connection, position_id: int, engine_version: str) -> list[ScoredMove]:
     rows = conn.execute(
         select(

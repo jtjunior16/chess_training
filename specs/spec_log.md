@@ -9,7 +9,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
-| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T13:46-08:00 | ready | not started (needs move acceptance and a table for attempts) |
+| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T14:16-08:00 | ready | not started (needs move acceptance and a table for attempts) |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T14:05-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display comes with pipeline step 6 |
 
 ## challenge_mode_spec.md
@@ -42,6 +42,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T14:16-08:00 | Decided by the user (a question found while building move acceptance): when the best move forces mate, a move that doesn't mate is **always a blunder** (§6), even though win % puts +8 only about 5 points below a mate. Built as `acceptance.miss_kind()`, which the tuning report uses now and scoring will use. | ready | #23 |
 | 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:27 copy in main). Build now with the placeholders. Decided since 13:27: recent = the last 50 attempts per group, with groups under 10 attempts showing "not enough data yet" (§2); breakdowns by phase, opening family, side, difficulty and puzzle theme, with no source breakdown (§3); the "only good move" claim measured as claim accuracy and spotting rate (§4); challenge-mode repeats don't count (§5); misses split into close misses and blunders at `blunder_line` (§6); what each attempt records (§7). Open, with placeholders: `blunder_line` (15), the difficulty buckets, opening click-through, combined breakdowns, recomputing old attempts, the Stats page layout, and the claim in challenge mode. An intermediate 13:29 copy (adding §3) was reviewed but never committed; the design chat overwrote it before the commit. | ready | #21 |
 | 2026-11-11T13:27-08:00 | Created in the design chat: progress is **accuracy %** (acceptable moves ÷ moves played), with no points, running score or streaks, each figure shown all-time and over a recent window. Imported by accident inside #20 (Claude's `git add -A` picked up the new file), so it wasn't logged then. | draft | #20 |
 
@@ -58,11 +59,9 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 ## Pending design decisions (snapshot, 2026-11-11T12:55-08:00, updated 2026-11-11T13:46-08:00)
 _Every open question across the specs, for the design chat. In priority order. Each one runs on its stated placeholder until it is decided. Replace this snapshot when it goes out of date._
 
-**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3); and at 13:46 the scoring spec's §1–§7 (accuracy %, the recent window, breakdowns, the claim figures, which attempts count, and close misses vs blunders), with scoring and move acceptance both marked ready. The position pipeline spec has no open questions left.
+**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3); missed mates always count as blunders (14:16, the user); and at 13:46 the scoring spec's §1–§7 (accuracy %, the recent window, breakdowns, the claim figures, which attempts count, and close misses vs blunders), with scoring and move acceptance both marked ready. The position pipeline spec has no open questions left.
 
 ### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), rule and tuning report **built** 14:05, G and L are placeholders)
-**New question (found while building):** when the best move mates, a big non-mating move (e.g. +8) is only about 5 win-% below the mate, so scoring §6 counts it as a **close miss**, not a blunder. Should missing a forced mate always be a blunder? Placeholder: as written (a close miss when within `blunder_line`). The verdict text already says "misses the mate".
-
 Tuning aid: `python -m chess_training.acceptance_report`. On partial data, puzzles are about 99% only-move positions whatever G and L are, so tune on the **opening grid**: L sets the set size (median 5 / 8 / 11 for L = 4 / 6 / 7.5), and G sets the only-move share (23% at G = 3 down to about 10% at G = 8).
 Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
 | Question | Placeholder now |

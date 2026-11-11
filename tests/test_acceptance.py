@@ -262,3 +262,21 @@ def test_scorable_positions_leave_out_mates(conn):
             )
         )
     assert scorable_positions(conn) == before + 1
+
+
+def test_missing_a_mate_is_always_a_blunder():
+    from chess_training.acceptance import miss_kind
+
+    acc = acceptable_set([mate("m1", 1), mate("m7", 7), cp("plus8", 800), cp("huge", 2500)], S)
+    assert miss_kind(acc, "m7", blunder_line=15) == "acceptable"  # a slower mate is fine
+    assert miss_kind(acc, "plus8", blunder_line=15) == "blunder"  # only ~5 win-% below
+    assert miss_kind(acc, "huge", blunder_line=100) == "blunder"  # whatever blunder_line is
+
+
+def test_close_misses_and_blunders_without_a_mate():
+    from chess_training.acceptance import miss_kind
+
+    acc = acceptable_set([cp("a", 0), cp("near", -100), cp("far", -600)], S)
+    assert miss_kind(acc, "a", 15) == "acceptable"
+    assert miss_kind(acc, "near", 15) == "close miss"  # 9.1 below
+    assert miss_kind(acc, "far", 15) == "blunder"  # about 40 below
