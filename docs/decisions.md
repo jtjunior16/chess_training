@@ -1,6 +1,23 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Move acceptance build details
+Asked: Details the move acceptance spec leaves open while building §2, §4, §6 and §7.
+Chose (Claude, flagged to the user in the PR):
+- **Ranking:** forced mates first (sooner first), then centipawns, then being mated (later first). Ties are broken by UCI, so the order is stable. Win % is used only for the G and L tests.
+- **The verdict's rank** ("7th of 12") counts among all legal moves. Its win-% loss is measured from the best move, from ≈100 when that move mates.
+- **A rare edge case:** when every move gets mated, the moves are compared by win % (all ≈0), so all are acceptable, as §7 says.
+- **The tuning report adds:**
+  - the blunder_line split (scoring spec §6 asked for it);
+  - G × L grids for all positions and for openings only.
+- **Config:** `scoring.blunder_line: 15` is added now (a placeholder) for the report. Its rule `blunder_line <= analysis.deep_margin` is only a comment for now. The check belongs in `analysis.check_config`, which stays untouched while the analysis runs.
+- **Missed mates:** the verdict reads "Not acceptable (misses the mate)" instead of a win-% loss, because win % can't show it (a +25 move is about 100 win-% too). Whether a missed mate counts as a blunder in scoring is sent to the design chat.
+- **Report details:**
+  - positions with both an opening and a puzzle source count as openings in the openings-only grid;
+  - the "of N positions" denominator leaves out checkmate and stalemate positions.
+- **Not built yet:** the §8 display, which comes with pipeline step 6.
+Why: A deterministic order keeps verdicts stable between runs. The opening grid is there because puzzles are about 99% only-move positions whatever G and L are, so an overall grid hides what G and L do.
+
 ## 2026-11-11: Move acceptance is ready to build with its placeholders
 Asked: Move acceptance still had G, L and the caching question open. Should building wait for them?
 Chose (user, in the design chat; spec Last revised 2026-11-11T13:46-08:00): No. The spec is **ready**. Build with G = 5 and L = 6 as placeholders, and tune them in a later design chat using the §6 tuning report once the full analysis has run. Caching the acceptable-set size is a performance detail: measure it once built and report back.

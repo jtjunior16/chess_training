@@ -10,7 +10,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
 | [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T13:46-08:00 | ready | not started (needs move acceptance and a table for attempts) |
-| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T13:46-08:00 | ready | not started |
+| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T14:05-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display comes with pipeline step 6 |
 
 ## challenge_mode_spec.md
 
@@ -49,6 +49,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T14:05-08:00 | **Built:** the acceptable-set rule (§2, with forced mates per §7), the verdict on a move (§4, e.g. "Acceptable (7th of 12)") and the §6 tuning report, plus a blunder_line split and G × L grids (overall and openings only). First numbers on partial data: puzzles 99% only-move, openings 15% with a median of 8 acceptable moves, so G and L should be tuned on openings. The §8 display waits for pipeline step 6. | in progress | #22 |
 | 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:20 copy). Build now with the G and L placeholders. They are tuned in a later design chat from the §6 tuning report, run after the full analysis. Caching the set size is a performance detail to measure once built. | ready | #21 |
 | 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Three open questions decided. Forced mates (new §7): when the best move forces mate, only moves that also force mate are acceptable, at any length. What the player sees (new §8): arrows for up to 3 acceptable moves, a verdict on the player's move, a count line, a "show all" toggle, and in only-move positions the 2nd-best move marked with what it loses. Challenge mode passes on the acceptable set (§4). Still open: G, L, and whether to cache the set size. | draft | #20 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-06T18:43-08:00, the time of the design chat's last content change). No other change. | draft | #8 |
@@ -59,7 +60,10 @@ _Every open question across the specs, for the design chat. In priority order. E
 
 **Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3); and at 13:46 the scoring spec's §1–§7 (accuracy %, the recent window, breakdowns, the claim figures, which attempts count, and close misses vs blunders), with scoring and move acceptance both marked ready. The position pipeline spec has no open questions left.
 
-### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), **ready** since 13:46: build with placeholders)
+### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), rule and tuning report **built** 14:05, G and L are placeholders)
+**New question (found while building):** when the best move mates, a big non-mating move (e.g. +8) is only about 5 win-% below the mate, so scoring §6 counts it as a **close miss**, not a blunder. Should missing a forced mate always be a blunder? Placeholder: as written (a close miss when within `blunder_line`). The verdict text already says "misses the mate".
+
+Tuning aid: `python -m chess_training.acceptance_report`. On partial data, puzzles are about 99% only-move positions whatever G and L are, so tune on the **opening grid**: L sets the set size (median 5 / 8 / 11 for L = 4 / 6 / 7.5), and G sets the only-move share (23% at G = 3 down to about 10% at G = 8).
 Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
 | Question | Placeholder now |
 |---|---|
