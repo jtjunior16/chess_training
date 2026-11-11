@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from chess_training.engine import Engine
 from chess_training.positions import BY_ID, SAMPLES
+from chess_training.scoring import stats as scoring_stats
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
 
@@ -123,3 +124,15 @@ def post_move(req: MoveRequest, request: Request) -> dict:
         "gap_cp": gap_cp,
         "only_move_claim": req.only_move,
     }
+
+
+@app.get("/api/stats")
+def get_stats() -> dict:
+    """The player's accuracy figures (specs/scoring_spec.md). Needs the database."""
+    from chess_training.db import get_engine
+
+    try:
+        with get_engine().connect() as conn:
+            return scoring_stats(conn)
+    except RuntimeError as exc:  # DATABASE_URL not set
+        raise HTTPException(503, str(exc)) from exc
