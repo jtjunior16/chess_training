@@ -4,15 +4,15 @@ _Last saved: 2026-11-11 11:31 · Overwritten by /project-format-toolkit:save-sta
 ## Where things stand
 - Playable skeleton: `uv run uvicorn chess_training.app:app --reload`, then open http://localhost:8000. Four hardcoded sample positions; shows the top 3 moves (arrows), the player's score and the pawns lost. No points yet.
 - Stack: FastAPI + python-chess + Stockfish 19 (pinned, downloaded by `scripts/get_stockfish.py` into tools/) + chessground 9.2.1 from a CDN. License GPL-3.0-or-later. Postgres 16 runs locally in Docker. The position bank (migrations 0001–0002) holds 7,717 opening positions and 5,000 puzzle positions. The README lists the commands that fill it.
-- Design lives in `specs/`: challenge mode = **ready** (needs the position bank), position pipeline = **in progress** (steps 1–4 of 6 done: the tables, the phase labeller, and the opening and puzzle importers), move acceptance = **draft**. `specs/spec_log.md` records when each spec was created, updated and built. CLAUDE.md: build only what a spec marks Decided, and never settle its Open questions while coding.
+- Design lives in `specs/`: challenge mode = **ready** (needs the position bank), position pipeline = **in progress** (steps 1–5 of 6 done: the tables, the phase labeller, the opening and puzzle importers, and batch analysis. The full analysis run is pending: 150 of 12,717 positions are scored), move acceptance = **draft**. `specs/spec_log.md` records when each spec was created, updated and built. CLAUDE.md: build only what a spec marks Decided, and never settle its Open questions while coding.
 - The user takes open questions to a separate design chat (Claude Desktop) and brings answers back as updated spec files.
 
 ## Unfinished work
 - None.
 
 ## Next steps
-1. Position pipeline step 5 of 6: batch engine analysis (spec §6). It scores every legal move of all 12,717 positions in two passes (depth 10, then depth 18 near the best), times the first 100 and reports the cost before the full run.
-2. Then: the game reads from the bank → move acceptance.
+1. Full analysis run: `uv run --env-file .env python -m chess_training.analysis` (about 4–5 hours, uses 10 of 12 cores, resumable, needs the user's OK).
+2. Then: position pipeline step 6 (the game reads from the bank; it must skip the 2 checkmate positions that end the Fool's Mate and Sea-Cadet Mate lines) → move acceptance (G and L are placeholders in `config.yaml`).
 
 ## Open questions
 Sent to the design chat in priority order:

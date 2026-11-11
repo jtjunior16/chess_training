@@ -157,3 +157,17 @@ puzzles:
       - underPromotion
       - collinearMove
       - defensiveMove
+
+analysis:
+  # Batch engine analysis (specs/position_pipeline_spec.md §6, decided 2026-11-09).
+  # Run with: uv run --env-file .env python -m chess_training.analysis [--limit 100]
+  quick_depth: 10      # quick pass: every legal move
+  deep_depth: 18       # deep pass: must equal engine.depth (the live game's depth)
+  deep_margin: 15      # win-% points below the best quick-pass move that get the deep pass
+  workers: 10          # parallel Stockfish processes, 1 thread each (engine.threads)
+
+move_acceptance:
+  # specs/move_acceptance_spec.md (status: draft). PLACEHOLDERS: G and L are open questions
+  # there. L is read now only for the analysis check deep_margin >= 2 x L.
+  G: 5                 # break size, win-% points (placeholder)
+  L: 6                 # cap below the best move, win-% points (placeholder)

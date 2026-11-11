@@ -1,6 +1,17 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Batch analysis details
+Asked: Spec §6 leaves some details open: what "well above L" means for the deep-pass margin check, how to keep results reproducible across parallel workers, which "first 100 positions" to time, and how many workers to use.
+Chose (proposed in the build plan, approved by the user):
+- The check is deep_margin ≥ 2 × L, and it fails at startup otherwise. G and L are now in `config.yaml` (`move_acceptance`), marked as placeholders from the draft move acceptance spec.
+- Every position starts a new UCI game, so the hash is cleared, and each engine uses 1 thread. A position's scores therefore don't depend on which worker ran it or what it ran before.
+- Positions are processed in a fixed shuffled order (md5 of `fen_key`). The first 100 then mix openings and puzzles and all three phases, and the full run resumes in the same order.
+- 10 worker processes on this 12-core machine.
+- The quick pass is one MultiPV search over all legal moves, and the deep pass is one MultiPV search restricted to the candidate moves. A move that MultiPV misses gets scored on its own.
+- The win-% curve lives in `chess_training/winpct.py` for move acceptance to reuse.
+Why: 2 × L leaves a clear safety band between "might be acceptable" and "skipped by the deep pass". Clearing the hash per position is what makes the 1-thread rule actually reproducible. A shuffled order makes the timing sample representative. Both passes as single searches avoid running one search per move.
+
 ## 2026-11-11: Endgame rule: a side without a queen may have 3 pieces
 Asked: The puzzle importer's phase check found Lichess calling 1,000 of the 5,000 sampled puzzles endgames where we said middlegame. 900 of them had 3 pieces against 3 or 2. The options were to raise the limit to 3, to allow 3 only without queens, or to keep 2. A follow-up asked whether "without queens" applies per side or to the whole board.
 Chose (user): 3 pieces without queens, **per side**. A side passes the endgame test with at most 2 pieces, at most 8 points, or no queen and at most 3 pieces, and both sides must pass. So Q+R v R+B+N is an endgame, and Q+R+B v Q+R+N is not. The limit is `phase.endgame_max_pieces_per_side_without_queen: 3`. A new `chess_training/relabel_phases.py` recomputes every label after a rule change. It treats a position as "from a named line" if it has any `source = 'opening'` row, the same as the importers, and takes the move number from `positions.fen` (the FEN as first seen). To undo the rule, set the no-queen limit to 2 and relabel: with 2 it adds nothing to the 2-piece test. This supersedes the 2-piece-only rule from 2026-11-09 for queenless sides.

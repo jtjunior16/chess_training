@@ -23,6 +23,8 @@ uv run --env-file .env python -m chess_training.openings  # opening positions th
 uv run python scripts/get_puzzles.py                      # pinned Lichess puzzle dump (~310 MB) into data/raw/
 uv run --env-file .env python -m chess_training.puzzles   # 5,000-puzzle sample + report (safe to re-run)
 uv run --env-file .env python -m chess_training.relabel_phases  # after changing the phase rule in config.yaml
+uv run --env-file .env python -m chess_training.analysis --limit 100  # score every legal move (timing report)
+uv run --env-file .env python -m chess_training.analysis              # the rest (~4–5 h, resumable)
 ```
 
 ## Run the game

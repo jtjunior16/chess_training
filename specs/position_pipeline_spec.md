@@ -1,8 +1,8 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-11T11:42-08:00
+**Last revised:** 2026-11-11T12:03-08:00
 
-**Status: in progress** (steps 1–4 built: the position bank tables and the phase labeller on 2026-11-09, the opening and puzzle importers on 2026-11-11; steps 5–6 to go)
+**Status: in progress** (steps 1–5 built: the position bank tables and the phase labeller on 2026-11-09; the opening and puzzle importers and batch analysis on 2026-11-11. The full analysis run and step 6 are still to go)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 
@@ -126,6 +126,18 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
 - Run several engine processes in parallel, each with 1 thread, so results stay reproducible.
 - Resumable: skip positions that already have scores for the current engine version.
 - Time the first 100 positions and report the per-position cost before the full run. Report per position: total time, quick-pass time, deep-pass time, number of legal moves, and **number of moves sent to the deep pass**, broken down by source and phase.
+- **Built 2026-11-11** (`chess_training/analysis.py`). Details settled while building (proposed in the build plan, approved by the user):
+  - "Well above L" is checked as **deep_margin ≥ 2 × L**. L lives in `config.yaml` under `move_acceptance`; it is still a placeholder (6) from the draft move acceptance spec.
+  - The hash is cleared before every position (a new UCI game), so a position's scores don't depend on what the worker analysed before it.
+  - "The first 100" are taken in a fixed shuffled order (md5 of `fen_key`), so they mix sources and phases. The full run uses the same order.
+  - 10 workers on this 12-core machine (`analysis.workers`).
+- **Timing, first 150 positions (2026-11-11):** 100 positions took 98 s and 50 more took 56 s, with 10 workers. Weighted by the bank's mix (61% openings), the full bank should take **about 4–5 hours**. Mean per position:
+  - Opening positions: 13.5–17.6 s, with 30–32 legal moves and 14–19 sent to the deep pass.
+  - Puzzle middlegames: 3.3 s, with 34 legal moves and 1.9 sent deep.
+  - Puzzle endgames: 0.9 s, with 22 legal moves and 2.6 sent deep.
+  - Opening positions cost the most because many moves stay within 15 win-% of the best.
+  - Two positions have no legal moves: the checkmates that end the named lines "Barnes Opening: Fool's Mate" and "Scotch Game: Sea-Cadet Mate". Analysis skips them and reports them. The game must never serve them (step 6).
+  - The stored `depth` is the depth Stockfish reports reaching, which must be at least the target. A position that fails is logged and left pending, and the run carries on.
 
 ### 7. Pawn fingerprint timing (decided 2026-11-09)
 `pawn_fingerprint` and `pawn_fingerprint_version` exist from step 1, nullable, and stay empty. When challenge mode is built, a one-time **backfill** fills every existing row, and the importers compute it at import from then on. The fingerprint is defined in [challenge_mode_spec.md](challenge_mode_spec.md).

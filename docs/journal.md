@@ -1,6 +1,14 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (batch analysis)
+- Built position pipeline step 5: `chess_training/analysis.py` (two-pass Stockfish scoring, 10 parallel workers, resumable) and `chess_training/winpct.py`.
+- Timing on the first 100 positions: 98 s wall time. 50 more took 56 s. The review pointed out that the simple estimate (3.4 h) ignored the bank's mix: 61% openings, against 55% in the sample. Weighted by what is left, it's about 4–5 hours. Opening positions average 13.5 s, because about 14 of their 32 moves stay within 15 win-% of the best and get the depth-18 pass. Puzzles average 1–3 s, with about 2 moves sent deep.
+- Spot check: after 1.e4 e5 2.f4 d5 (Falkbeer), the stored best moves are exd5 −0.19 and Nf3 −0.21, both at depth 18.
+- The 150 analysed positions stay in the bank. The full run skips them.
+- Two bank positions have no legal moves: the mates that end "Fool's Mate" and "Sea-Cadet Mate". Analysis now skips and reports them. Before the fix they would have stayed pending forever. Step 6 must not serve them.
+- Review fixes before the long run: store the depth Stockfish actually reached, log a failed position and carry on, weight the estimate by the remaining mix, and test that a fresh engine gives the same scores as a used one.
+
 ## 2026-11-11 (endgame rule without queens)
 - The user settled both open questions from the puzzle importer: the unplaced tags are not themes (#14), and endgames now allow 3 pieces for a side without a queen, checked per side.
 - Added `relabel_phases`, because the importers only label boards they add for the first time. It changed 298 positions (all middlegame → endgame), and a second run changed none.
