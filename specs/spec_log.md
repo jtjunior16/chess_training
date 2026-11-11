@@ -9,7 +9,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
-| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T13:29-08:00 | draft | not started (needs move acceptance and a table for attempts) |
+| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T13:46-08:00 | ready | not started (needs move acceptance and a table for attempts) |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T13:46-08:00 | ready | not started |
 
 ## challenge_mode_spec.md
@@ -42,7 +42,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
-| 2026-11-11T13:29-08:00 | Updated from the design chat, newer than the 2026-11-11T13:27-08:00 copy. Adds §3, the breakdowns: phase, opening family (the name before the colon), side, difficulty (acceptable-set size) and puzzle theme, with no source breakdown. New open questions: clicking through to full opening names, difficulty bucket boundaries, combined breakdowns, and average win-% lost. This row also logs the spec's creation, which wasn't logged at the time. | draft | #21 |
+| 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:27 copy in main). Build now with the placeholders. Decided since 13:27: recent = the last 50 attempts per group, with groups under 10 attempts showing "not enough data yet" (§2); breakdowns by phase, opening family, side, difficulty and puzzle theme, with no source breakdown (§3); the "only good move" claim measured as claim accuracy and spotting rate (§4); challenge-mode repeats don't count (§5); misses split into close misses and blunders at `blunder_line` (§6); what each attempt records (§7). Open, with placeholders: `blunder_line` (15), the difficulty buckets, opening click-through, combined breakdowns, recomputing old attempts, the Stats page layout, and the claim in challenge mode. An intermediate 13:29 copy (adding §3) was reviewed but never committed; the design chat overwrote it before the commit. | ready | #21 |
 | 2026-11-11T13:27-08:00 | Created in the design chat: progress is **accuracy %** (acceptable moves ÷ moves played), with no points, running score or streaks, each figure shown all-time and over a recent window. Imported by accident inside #20 (Claude's `git add -A` picked up the new file), so it wasn't logged then. | draft | #20 |
 
 ## move_acceptance_spec.md
@@ -54,10 +54,10 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | 2026-11-09 | Added the `Last revised` line (2026-11-06T18:43-08:00, the time of the design chat's last content change). No other change. | draft | #8 |
 | 2026-11-06 | Created: a gap-based acceptable-move rule in win %, replacing the fixed "top 3". G, L, mate handling and the challenge-mode pass rule are still open. | draft | #5 |
 
-## Pending design decisions (snapshot, 2026-11-11T12:55-08:00, updated 2026-11-11T13:20-08:00)
+## Pending design decisions (snapshot, 2026-11-11T12:55-08:00, updated 2026-11-11T13:46-08:00)
 _Every open question across the specs, for the design chat. In priority order. Each one runs on its stated placeholder until it is decided. Replace this snapshot when it goes out of date._
 
-**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), and, from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3). The position pipeline spec has no open questions left.
+**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3); and at 13:46 the scoring spec's §1–§7 (accuracy %, the recent window, breakdowns, the claim figures, which attempts count, and close misses vs blunders), with scoring and move acceptance both marked ready. The position pipeline spec has no open questions left.
 
 ### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), **ready** since 13:46: build with placeholders)
 Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
@@ -69,16 +69,23 @@ Batch analysis will have scored every legal move of all 12,715 bank positions by
 
 Suggested approach: settle the *method* now (for example, "pick G and L so that X% of positions are only-move positions"), and pick the numbers once the tuning report has real data.
 
-### 2. Scoring ([scoring_spec.md](scoring_spec.md), draft). Updated 2026-11-11T13:29: progress is accuracy %, not points
+### 2. Scoring ([scoring_spec.md](scoring_spec.md), **ready** since 13:46: build with placeholders). Progress is accuracy %, not points
+Needs real data (settle together with G and L):
+| Question | Placeholder now |
+|---|---|
+| Value of `blunder_line` (close miss vs blunder) | 15 win-% points, and it must stay ≤ the analysis deep_margin (15) |
+| Difficulty bucket boundaries | 1 / 2–4 / 5+ |
+
+Small design choices (they don't block the build):
 | Question | Placeholder now |
 |---|---|
 | Click through from an opening family to its variations? | No |
-| Difficulty bucket boundaries (depend on G and L) | 1 / 2–4 / 5+ |
 | Combined breakdowns (e.g. Caro-Kann as Black) | No |
-| Size of the recent window | Last 50 attempts per group |
-| Which attempts count (repeats, challenge mode) | All, in both modes |
-| How the "only good move" claim is measured | Not measured yet |
-| Also show average win-% lost on non-acceptable moves? | No |
+| Recompute old attempts when G, L or blunder_line change? | Yes, from the stored move and scores |
+| Where the figures are shown | One Stats page: overall, then one table per breakdown |
+| Should a wrong or missed claim also fail a challenge position? | No |
+
+**For the design chat to fix:** move acceptance's open-questions note says the tuning report runs after "the full analysis run (position pipeline step 6)". The full analysis run belongs to step 5. Step 6 is the game reading from the bank.
 
 ### 3. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)
 | Question | Placeholder now |

@@ -3,7 +3,10 @@ _Newest first. Short entries as work happens: what was done, what was learned, w
 
 ## 2026-11-11 (design chat round: move acceptance, challenge mode, scoring)
 - The design chat sent updated move_acceptance and challenge_mode specs (forced mates, the pass rule, what the player sees after a move), merged in #20, and a new scoring spec: accuracy %, no points.
-- Mistake: the commit for #20 used `git add -A`, which also swept in the design chat's brand-new `scoring_spec.md` (13:27 draft), unreviewed and unlogged. It was caught when the 13:29 version showed up as a modification. #21 logs both versions. Lesson: stage spec imports by name, not with `git add -A`, while the design chat may be writing files.
+- Mistake, twice:
+  - The commit for #20 used `git add -A`, which swept in the design chat's brand-new `scoring_spec.md` (13:27 draft), unreviewed and unlogged.
+  - Then the 13:29 copy was reviewed, but the design chat overwrote it with 13:46 (status ready, §4–§7 added) before the commit. So #21's first records described a version that was never in git. The pr-reviewer caught it, and #21 now matches 13:46.
+  - Lessons: stage spec imports by file name, never with `git add -A`. Just before committing, check each staged spec's `Last revised` against the one reviewed (`git show :specs/<file> | head -3`).
 - Checked the scoring spec against the bank: there are 149 opening families over 7,717 named positions (about 50 each), so that breakdown isn't too thin. The 5,000 puzzle positions have no opening name and appear only in the other breakdowns. Attempts aren't stored yet, so building this spec needs a migration.
 
 ## 2026-11-11 (stop and resume the analysis)
