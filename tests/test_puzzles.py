@@ -8,7 +8,7 @@ import chess
 import pandas as pd
 import pytest
 import zstandard
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from chess_training.config import load_config
 from chess_training.db import position_sources, positions
@@ -230,7 +230,10 @@ def test_write_adds_sources_and_keeps_existing_positions(conn):
     assert src.puzzle_themes == ["middlegame", "short"]
     assert src.puzzle_rating == 600 + 74
 
-    write_sample(conn, sample)  # second run: same rows, nothing new
+    n_positions = conn.execute(select(func.count()).select_from(positions)).scalar_one()
+    again = write_sample(conn, sample)  # second run: same rows, nothing new
+    assert again["new_positions"] == 0
+    assert conn.execute(select(func.count()).select_from(positions)).scalar_one() == n_positions
     n = conn.execute(
         select(position_sources.c.id).where(
             position_sources.c.source_ref.in_(["p0000", "p0001", "p0002"])
