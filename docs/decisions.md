@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Missing a forced mate is always a blunder
+Asked: When the best move forces mate, a big non-mating move (e.g. +8, about 95 win-%) is only about 5 win-% below the mate (about 100). So scoring spec §6's split at `blunder_line` (15) counted it as a close miss. Should missing a forced mate always be a blunder?
+Chose (user): Yes. When the best move forces mate, any move that doesn't mate is a blunder, whatever its score and wherever `blunder_line` is. Built in `chess_training/acceptance.py` as `miss_kind()`, which the tuning report uses now and scoring will use later. Scoring spec §6 is updated (Last revised 2026-11-11T14:16-08:00).
+Why: Missing a forced mate is exactly the tactic the player failed to see. Win % hides that, because every winning position is close to 100%.
+
 ## 2026-11-11: Move acceptance build details
 Asked: Details the move acceptance spec leaves open while building §2, §4, §6 and §7.
 Chose (Claude, flagged to the user in the PR):

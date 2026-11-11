@@ -28,6 +28,7 @@ from chess_training.acceptance import (
     AcceptanceSettings,
     ScoredMove,
     acceptable_set,
+    miss_kind,
 )
 from chess_training.config import load_config
 from chess_training.db import get_engine, position_moves, position_sources, positions
@@ -116,15 +117,8 @@ def summarise(bank: list[BankPosition], settings: AcceptanceSettings, blunder_li
                 "all_mated": all_mated,
             }
         )
-        best = acc.best.win
         for m in acc.ranked[acc.size :]:
-            loss = best - m.win
-            losses.append(
-                {
-                    "phase": p.phase,
-                    "kind": "close miss" if loss <= blunder_line else "blunder",
-                }
-            )
+            losses.append({"phase": p.phase, "kind": miss_kind(acc, m.uci, blunder_line)})
     return pd.DataFrame(rows), pd.DataFrame(losses, columns=["phase", "kind"]), results
 
 

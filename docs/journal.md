@@ -5,6 +5,7 @@ _Newest first. Short entries as work happens: what was done, what was learned, w
 - Built the acceptable-set rule, the verdict and the tuning report while the analysis runs. They read stored scores only. Nothing touched `analysis.py` or the engine config, so a replacement worker can't load changed code.
 - First report (4,604 positions): **puzzles are 99% only-move positions** and their wrong moves are all blunders. **Openings are 15% only-move**, with a median of 8 acceptable moves and a third close misses. G and L only really matter for openings, so the report gained an openings-only G × L grid. There, L drives the set size (5 / 8 / 11) and G drives the only-move share (23% → about 10%).
 - The report runs in about 9 s on 4,600 positions.
+- Review follow-up: a non-mating move in a mate position read "lost 0 win-%" and counted as a close miss. Its verdict now says "misses the mate", and the user decided that a missed mate is always a blunder (`miss_kind()`, scoring §6).
 
 ## 2026-11-11 (design chat round: move acceptance, challenge mode, scoring)
 - The design chat sent updated move_acceptance and challenge_mode specs (forced mates, the pass rule, what the player sees after a move), merged in #20, and a new scoring spec: accuracy %, no points.
