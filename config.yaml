@@ -141,8 +141,8 @@ puzzles:
       - master
       - masterVsMaster
       - superGM
-    # PLACEHOLDER (2026-11-11, user): tags the spec doesn't place. Treated as NOT themes until the
-    # design chat decides; move any of them to `motif` to make it count.
+    # Tags the spec didn't place. Decided 2026-11-11 (user): NOT themes. Kept as their own list so
+    # it stays clear which tags were judgement calls; move one to `motif` to make it count.
     unplaced:
       - advancedPawn
       - attackingF2F7
