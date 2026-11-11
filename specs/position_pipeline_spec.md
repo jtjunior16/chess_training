@@ -1,8 +1,8 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-11T11:22-08:00
+**Last revised:** 2026-11-11T11:29-08:00
 
-**Status: in progress** (steps 1–3 built: the position bank tables and the phase labeller on 2026-11-09, the opening importer on 2026-11-11; steps 4–6 to go)
+**Status: in progress** (steps 1–4 built: the position bank tables and the phase labeller on 2026-11-09, the opening and puzzle importers on 2026-11-11; steps 5–6 to go)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 
@@ -102,6 +102,13 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
   - origin: master, masterVsMaster, superGM
 
   Check this list against Lichess's official theme file (linked from database.lichess.org), keep it as one include/exclude list in `config.yaml`, and flag any tag you can't place.
+  - Checked 2026-11-11 against lila's `translation/source/puzzleTheme.xml`. Eleven tags couldn't be placed: advancedPawn, attackingF2F7, castling, enPassant, exposedKing, kingsideAttack, queensideAttack, promotion, underPromotion, collinearMove, defensiveMove. **Placeholder (the user's choice): not themes**, listed under `puzzles.themes.unplaced` (see Open questions).
+- **Decided while building (2026-11-11, by the user):**
+  - "Fill the rest evenly" means the **final** per-band totals are as even as possible, floor picks included. A band short of puzzles gives its share to the others.
+  - The dump is pinned by its SHA-256 (the 2026-11-01 dump). Lichess serves only the latest file, so a newer dump fails the check until it is re-pinned on purpose.
+- **First run (2026-11-11):** 4,482,593 puzzles passed the quality filter. Every motif theme reached the floor. Bands got 332–333 each, except 3200–3399, which has only 14 puzzles. No tag in the data was missing from the lists. Phase check, ours against Lichess's tag:
+  - Of the 2,623 puzzles Lichess tags "endgame", we label 1,623 endgame and 1,000 middlegame. 900 of those 1,000 have 3 pieces on one side against 3 or 2 on the other. Lichess's endgame line sits higher than our "at most 2 pieces each side" (see Open questions).
+  - 94 Lichess "opening" puzzles are middlegame for us (move 12 or later), and 35 Lichess "middlegame" puzzles are opening for us.
 - Why: scoring every legal move rules out all ~6 million puzzles. The floor keeps challenge mode's same-theme matching from running out on rare themes. The quality filter avoids spending engine time on broken puzzles. Phase, length, goal and origin tags are on almost every puzzle, so they'd make every puzzle "similar".
 
 ### 6. Batch engine analysis
@@ -130,7 +137,8 @@ Why: it avoids committing to the fingerprint design before challenge mode exists
 | When to compute the fingerprint | Column now, filled when challenge mode is built | Unchanged: confirmed (§7) |
 
 ## Open questions
-None for this spec.
+- **Unplaced puzzle tags** (found 2026-11-11): should any of advancedPawn, attackingF2F7, castling, enPassant, exposedKing, kingsideAttack, queensideAttack, promotion, underPromotion, collinearMove, defensiveMove count as motif themes? Placeholder: none do (`puzzles.themes.unplaced` in `config.yaml`).
+- **Endgame threshold vs Lichess** (found 2026-11-11): 1,000 of the 5,000 sampled puzzles are Lichess "endgame" but our "middlegame", mostly 3 pieces against 3 or 2 (§5, first run). Keep §3's limit of 2 pieces per side, or raise it to 3? Placeholder: unchanged (2). It's `phase.endgame_max_pieces_per_side` in `config.yaml`.
 
 ## Out of scope for now
 - **Quiet positions from real Lichess games.** They need their own spec, because "quiet" isn't defined yet.
