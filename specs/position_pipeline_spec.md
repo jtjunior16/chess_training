@@ -1,6 +1,6 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-11T11:07-08:00
+**Last revised:** 2026-11-11T11:22-08:00
 
 **Status: in progress** (steps 1–3 built: the position bank tables and the phase labeller on 2026-11-09, the opening importer on 2026-11-11; steps 4–6 to go)
 
@@ -44,6 +44,7 @@ Move acceptance (its own spec) comes after step 5.
 - `moves_to_position`: the SAN moves leading here, plus the last move played. Stored now because it's cheap, and it lets the game later show how the position arose.
 - `opening_eco`: for opening sources
 - `puzzle_rating`, `puzzle_themes` (a list), `puzzle_popularity`, `puzzle_nb_plays`: for puzzle sources
+- `puzzle_opening_tags` (a list): the Lichess `OpeningTags` of the puzzle's game, for puzzle sources. Added by migration 0002 (decided 2026-11-11 by the user). It is informational only and never feeds `opening_name`.
 - `created_at`
 - Unique: (`source`, `source_ref`)
 
@@ -87,7 +88,7 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
 ### 5. Puzzle importer
 - **Source:** the Lichess puzzle database (database.lichess.org, CC0, a zstd-compressed CSV). Columns: `PuzzleId, FEN, Moves, Rating, RatingDeviation, Popularity, NbPlays, Themes, GameUrl, OpeningTags`.
 - **The puzzle's FEN is the position *before* the opponent's move.** The first move in `Moves` is the opponent's. The training position is the FEN **after** that first move, and that move is stored as the last move played.
-- Keep the rating and themes. Store `OpeningTags` as the game's opening name; it's informational only.
+- Keep the rating and themes. Store `OpeningTags` as the game's opening name in `position_sources.puzzle_opening_tags`; it's informational only.
 - **Sample (decided 2026-11-09).** All numbers live in `config.yaml`.
   1. **Quality filter first:** drop puzzles with `NbPlays` < **100** or `Popularity` < **80** (popularity runs −100 to 100, from player votes).
   2. **Size: 5,000.**
