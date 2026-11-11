@@ -1,6 +1,13 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (puzzle importer)
+- Built position pipeline step 4: `chess_training/puzzles.py` and `scripts/get_puzzles.py`. It streams the 310 MB zstd dump (new dependency: `zstandard`; Python 3.13 has no built-in zstd), filters it to 4.48M puzzles, samples 5,000 and upserts them. The whole run takes about 45 seconds, and a second run adds nothing.
+- None of the 5,000 sampled boards were already in the bank from openings.
+- The 3200–3399 band has only 14 puzzles in the whole dump. Its share went to the other bands, as designed.
+- The phase check found a real gap: Lichess calls about 1,000 sampled puzzles endgames that our rule calls middlegame. Most have 3 pieces against 3 or 2. Sent to the design chat. The rule is unchanged.
+- The rollback in this PR is the safe two-step version: delete the puzzle source rows, then only the positions left with no source.
+
 ## 2026-11-11 (puzzle opening tags column)
 - Planning the puzzle importer found that spec §5 asks to store `OpeningTags` but §2 has no column for them. Migration 0002 adds `position_sources.puzzle_opening_tags` (nullable, so no backfill).
 - Also settled while planning (they go in with the importer PR): the 11 theme tags the spec doesn't place are not themes for now (placeholder, sent to the design chat), and the rating bands are filled so that final totals are even.
