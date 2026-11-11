@@ -25,7 +25,7 @@ import argparse
 import multiprocessing as mp
 import time
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import chess
 import chess.engine
@@ -122,6 +122,14 @@ def _score(info: dict, turn: chess.Color) -> tuple[int | None, int | None]:
     return s.score(), s.mate()
 
 
+def _depth(info: dict, target: int) -> int:
+    """The depth Stockfish actually reached; it must be at least the target."""
+    depth = int(info.get("depth") or 0)
+    if depth < target:
+        raise RuntimeError(f"Search stopped at depth {depth}, below the target {target}")
+    return depth
+
+
 def deep_candidates(moves: Iterable[MoveScore], margin: float) -> list[str]:
     """UCI of every move within `margin` win-% points of the best one (the best included)."""
     moves = list(moves)
@@ -154,7 +162,7 @@ def analyse_position(
             continue
         cp, mate = _score(info, board.turn)
         scored[pv[0].uci()] = MoveScore(
-            pv[0].uci(), board.san(pv[0]), cp, mate, settings.quick_depth
+            pv[0].uci(), board.san(pv[0]), cp, mate, _depth(info, settings.quick_depth)
         )
     for move in legal:  # safety net: score any move MultiPV didn't return on its own
         if move.uci() not in scored:
@@ -166,7 +174,7 @@ def analyse_position(
             )
             cp, mate = _score(info, board.turn)
             scored[move.uci()] = MoveScore(
-                move.uci(), board.san(move), cp, mate, settings.quick_depth
+                move.uci(), board.san(move), cp, mate, _depth(info, settings.quick_depth)
             )
     quick_s = time.perf_counter() - t0
 
@@ -185,16 +193,23 @@ def analyse_position(
             continue
         cp, mate = _score(info, board.turn)
         m = scored[pv[0].uci()]
-        m.score_cp, m.score_mate, m.depth = cp, mate, settings.deep_depth
+        m.score_cp, m.score_mate, m.depth = cp, mate, _depth(info, settings.deep_depth)
     deep_s = time.perf_counter() - t1
 
-    missing = [u for u in cands if scored[u].depth != settings.deep_depth]
+    missing = [u for u in cands if scored[u].depth < settings.deep_depth]
     if missing:
         raise RuntimeError(f"Deep pass returned no score for {missing} in position {position_id}")
     return PositionResult(position_id, list(scored.values()), quick_s, deep_s, len(cands))
 
 
 # ---------------------------------------------------------------- workers
+
+
+@dataclass
+class Failure:
+    position_id: int
+    error: str
+
 
 _worker_engine: chess.engine.SimpleEngine | None = None
 _worker_settings: AnalysisSettings | None = None
@@ -215,20 +230,23 @@ def _init_worker(settings: AnalysisSettings) -> None:
     _worker_engine = open_engine(settings)
 
 
-def _work(task: tuple[int, str]) -> PositionResult:
-    return analyse_position(_worker_engine, task[0], task[1], _worker_settings)
+def _work(task: tuple[int, str]) -> PositionResult | Failure:
+    try:
+        return analyse_position(_worker_engine, task[0], task[1], _worker_settings)
+    except Exception as exc:  # one bad position must not stop a long run
+        return Failure(task[0], f"{type(exc).__name__}: {exc}")
 
 
 def run_parallel(
     tasks: list[tuple[int, str]], settings: AnalysisSettings
-) -> Iterator[PositionResult]:
+) -> Iterator[PositionResult | Failure]:
     if settings.workers <= 1:
-        eng = open_engine(settings)
+        _init_worker(settings)
         try:
-            for pid, fen in tasks:
-                yield analyse_position(eng, pid, fen, settings)
+            for task in tasks:
+                yield _work(task)
         finally:
-            eng.quit()
+            _worker_engine.quit()
         return
     ctx = mp.get_context("spawn")
     with ctx.Pool(settings.workers, initializer=_init_worker, initargs=(settings,)) as pool:
@@ -238,8 +256,16 @@ def run_parallel(
 # ---------------------------------------------------------------- database
 
 
+def has_legal_moves(fen: str) -> bool:
+    return any(chess.Board(fen).legal_moves)
+
+
 def pending(conn: Connection, engine_version: str, limit: int | None = None) -> list[tuple]:
-    """(id, fen) of positions without scores for this engine version, in the fixed shuffle."""
+    """(id, fen) of positions without scores for this engine version, in the fixed shuffle.
+
+    Checkmate and stalemate positions (no legal moves, e.g. the end of "Fool's Mate") have
+    nothing to score, so they are left out; see `terminal_positions`.
+    """
     done = exists().where(
         position_moves.c.position_id == positions.c.id,
         position_moves.c.engine_version == engine_version,
@@ -249,9 +275,14 @@ def pending(conn: Connection, engine_version: str, limit: int | None = None) -> 
         .where(~done)
         .order_by(func.md5(positions.c.fen_key), positions.c.id)
     )
-    if limit:
-        q = q.limit(limit)
-    return [tuple(r) for r in conn.execute(q).all()]
+    rows = [(r.id, r.fen) for r in conn.execute(q) if has_legal_moves(r.fen)]
+    return rows[:limit] if limit else rows
+
+
+def terminal_positions(conn: Connection) -> list[int]:
+    """Ids of positions with no legal moves. They never get scores."""
+    rows = conn.execute(select(positions.c.id, positions.c.fen))
+    return [r.id for r in rows if not has_legal_moves(r.fen)]
 
 
 def save(conn: Connection, result: PositionResult, engine_version: str) -> None:
@@ -284,7 +315,7 @@ def save(conn: Connection, result: PositionResult, engine_version: str) -> None:
 
 
 def position_labels(conn: Connection, ids: list[int]) -> pd.DataFrame:
-    """Source (opening / puzzle / both) and phase for the given positions."""
+    """Source (opening / puzzle / both) and phase for the given positions, indexed by id."""
     rows = conn.execute(
         select(positions.c.id, positions.c.phase, position_sources.c.source)
         .join(position_sources, position_sources.c.position_id == positions.c.id)
@@ -297,13 +328,22 @@ def position_labels(conn: Connection, ids: list[int]) -> pd.DataFrame:
 
 # ---------------------------------------------------------------- run + report
 
+STAT_COLUMNS = ["total_s", "quick_s", "deep_s", "legal_moves", "deep_moves"]
+
 
 def run(db: Engine, settings: AnalysisSettings, limit: int | None = None) -> pd.DataFrame:
-    """Analyse pending positions; each result is committed as soon as it arrives."""
+    """Analyse pending positions; each result is committed as soon as it arrives.
+
+    A position that fails is logged and left pending, and the run carries on.
+    """
     with db.connect() as conn:
         tasks = pending(conn, settings.engine_version, limit)
     records = []
     for result in run_parallel(tasks, settings):
+        if isinstance(result, Failure):
+            print(f"FAILED position {result.position_id}: {result.error}", flush=True)
+            records.append({"id": result.position_id, "failed": True})
+            continue
         with db.begin() as conn:
             save(conn, result, settings.engine_version)
         records.append(
@@ -314,36 +354,59 @@ def run(db: Engine, settings: AnalysisSettings, limit: int | None = None) -> pd.
                 "deep_s": result.deep_s,
                 "legal_moves": len(result.moves),
                 "deep_moves": result.deep_count,
+                "failed": False,
             }
         )
-    return pd.DataFrame(records)
+    return pd.DataFrame(records, columns=["id", *STAT_COLUMNS, "failed"])
 
 
-def report(stats: pd.DataFrame, labels: pd.DataFrame, wall_s: float, remaining: int, workers: int):
-    df = stats.set_index("id").join(labels)
-    cols = ["total_s", "quick_s", "deep_s", "legal_moves", "deep_moves"]
-    lines = [
-        f"Analysed {len(df)} positions in {wall_s:.0f} s wall time with {workers} workers.",
-        "",
-        "Per position, mean (by source and phase):",
-        df.groupby(["source", "phase"])[cols]
-        .mean()
-        .round(2)
-        .assign(n=df.groupby(["source", "phase"]).size())
-        .to_string(),
-        "",
-        "Per position, overall: mean / median / max",
-    ]
-    for c in cols:
-        lines.append(f"  {c:<12} {df[c].mean():8.2f} {df[c].median():8.2f} {df[c].max():8.2f}")
+def estimate_hours(done: pd.DataFrame, wall_s: float, remaining: pd.DataFrame) -> float:
+    """Remaining wall time, weighted by the source/phase mix still pending.
+
+    Mean engine seconds per position for each (source, phase) in this run, times how many of
+    each are left, scaled by this run's wall time per engine second (which captures the
+    parallelism). Groups this run didn't see use its overall mean.
+    """
+    if done.empty or remaining.empty or done["total_s"].sum() == 0:
+        return 0.0
+    per_group = done.groupby(["source", "phase"])["total_s"].mean()
+    overall = done["total_s"].mean()
+    left = remaining.groupby(["source", "phase"]).size()
+    engine_s = sum(n * per_group.get(g, overall) for g, n in left.items())
+    return engine_s * (wall_s / done["total_s"].sum()) / 3600
+
+
+def report(
+    stats: pd.DataFrame,
+    labels: pd.DataFrame,
+    wall_s: float,
+    remaining: pd.DataFrame,
+    workers: int,
+    terminal: int,
+) -> str:
+    failed_mask = stats["failed"].astype(bool)
+    failed = stats.loc[failed_mask, "id"].tolist()
+    df = stats[~failed_mask].set_index("id").join(labels)
+    lines = [f"Analysed {len(df)} positions in {wall_s:.0f} s wall time with {workers} workers."]
     if len(df):
-        per_pos_wall = wall_s / len(df)
-        est_h = per_pos_wall * remaining / 3600
+        groups = df.groupby(["source", "phase"])
         lines += [
             "",
-            f"Remaining positions: {remaining:,}. At {per_pos_wall:.2f} s wall time per position "
-            f"(this run's throughput), the rest takes about {est_h:.1f} hours.",
+            "Per position, mean (by source and phase):",
+            groups[STAT_COLUMNS].mean().round(2).assign(n=groups.size()).to_string(),
+            "",
+            "Per position, overall: mean / median / max",
         ]
+        for c in STAT_COLUMNS:
+            lines.append(f"  {c:<12} {df[c].mean():8.2f} {df[c].median():8.2f} {df[c].max():8.2f}")
+    lines += [
+        "",
+        f"Remaining positions: {len(remaining):,}. Weighted by their source and phase mix, the "
+        f"rest takes about {estimate_hours(df, wall_s, remaining):.1f} hours.",
+        f"Skipped: {terminal} positions with no legal moves (checkmate or stalemate).",
+    ]
+    if failed:
+        lines.append(f"FAILED: {len(failed)} positions, still pending (re-run to retry): {failed}")
     return "\n".join(lines)
 
 
@@ -353,19 +416,27 @@ def main() -> None:
     parser.add_argument("--workers", type=int, help="override analysis.workers")
     args = parser.parse_args()
     settings = AnalysisSettings.from_config()
-    if args.workers:
-        settings = AnalysisSettings(**{**settings.__dict__, "workers": args.workers})
+    if args.workers is not None:
+        if args.workers < 1:
+            parser.error("--workers must be at least 1")
+        settings = replace(settings, workers=args.workers)
     db = get_engine()
     t0 = time.perf_counter()
     stats = run(db, settings, args.limit)
     wall = time.perf_counter() - t0
-    if stats.empty:
-        print("Nothing to analyse: every position has scores for", settings.engine_version)
-        return
     with db.connect() as conn:
-        labels = position_labels(conn, stats["id"].tolist())
-        remaining = len(pending(conn, settings.engine_version))
-    print(report(stats, labels, wall, remaining, settings.workers))
+        terminal = len(terminal_positions(conn))
+        if stats.empty:
+            print(
+                f"Nothing to analyse: every position has scores for {settings.engine_version} "
+                f"({terminal} positions with no legal moves are skipped)."
+            )
+            return
+        done_ids = stats.loc[~stats["failed"].astype(bool), "id"].tolist()
+        labels = position_labels(conn, done_ids)
+        left = [pid for pid, _ in pending(conn, settings.engine_version)]
+        remaining = position_labels(conn, left).reset_index()
+    print(report(stats, labels, wall, remaining, settings.workers, terminal))
 
 
 if __name__ == "__main__":

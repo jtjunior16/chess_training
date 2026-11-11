@@ -157,3 +157,47 @@ def test_saved_positions_are_no_longer_pending(conn, sf):
     rows = conn.execute(select(position_moves).where(position_moves.c.position_id == pid)).all()
     assert len(rows) == len(list(chess.Board(fen).legal_moves))
     assert pid not in {p for p, _ in pending(conn, version)}
+
+
+def test_fresh_engine_gives_the_same_scores_as_a_used_one(sf):
+    eng, settings = sf
+    fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3"
+    used = analyse_position(eng, 6, fen, settings)
+    fresh_engine = open_engine(settings)
+    try:
+        fresh = analyse_position(fresh_engine, 6, fen, settings)
+    finally:
+        fresh_engine.quit()
+    key = lambda r: sorted((m.uci, m.score_cp, m.score_mate, m.depth) for m in r.moves)  # noqa: E731
+    assert key(used) == key(fresh)
+
+
+def test_terminal_positions_are_never_pending(conn):
+    from chess_training.analysis import terminal_positions
+
+    mated = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3"  # Fool's Mate
+    pid = conn.execute(
+        insert(positions)
+        .values(
+            fen=mated,
+            fen_key="fools-mate test",
+            side_to_move="w",
+            phase="opening",
+        )
+        .returning(positions.c.id)
+    ).scalar_one()
+    assert pid in terminal_positions(conn)
+    assert pid not in {p for p, _ in pending(conn, "test-engine")}
+
+
+def test_estimate_is_weighted_by_what_is_left():
+    import pandas as pd
+
+    from chess_training.analysis import estimate_hours
+
+    done = pd.DataFrame(
+        {"source": ["opening", "puzzle"], "phase": ["opening", "endgame"], "total_s": [10.0, 2.0]}
+    )
+    left = pd.DataFrame({"source": ["opening"] * 3, "phase": ["opening"] * 3})
+    # 3 openings x 10 s of engine time, at 6 s wall per 12 s engine -> 15 s wall
+    assert estimate_hours(done, 6.0, left) * 3600 == pytest.approx(15.0)
