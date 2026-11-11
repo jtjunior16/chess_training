@@ -33,3 +33,19 @@ engine:
     stockfish-windows-x86-64-universal.zip: 3c8bf1f9ea66a09350a40df4f632288285ac206d99f33ab5842c408fc30b48a7
     stockfish-linux-x86-64-universal.tar.gz: 9defc0d4e55d49c65a6d042f3e571a39fcea499ade6dbe741b53b8c65e03611f
     stockfish-macos-universal.tar.gz: a1f0e3bcc5a6927a11fe6fc8e54a779754645f3c2bae2cf13420fd1957adaa77
+
+openings:
+  # Opening importer (specs/position_pipeline_spec.md §4). Source: lichess-org/chess-openings (CC0),
+  # pinned to one commit so imports can be reproduced. Download with:
+  #   uv run python scripts/get_openings.py
+  # then import with: uv run --env-file .env python -m chess_training.openings
+  repo: lichess-org/chess-openings
+  commit: 3ba6b20d31b2e6125cb0e6a2e792f400717d9d39   # 2026-11-05
+  subdir: openings                  # under data.raw_dir
+  max_fullmove: 10                  # keep positions through Black's 10th move (20 half-moves)
+  sha256:
+    a.tsv: 3282e4c9155289a29224f9a85fba0decb46efa35c2fa5e39662d2ac48fb0f793
+    b.tsv: 2744a3890879bd9dce79093147fe5b6c3a9d9d42a3388af698e67b6829be1c48
+    c.tsv: 447bbd4b15d68067b150faf12bf66aa14b18582cf80d736aaa7c0081131806ef
+    d.tsv: 1cf4057a8aece94f27bb3f278ad410ee2844831a642364eeceaafa091dbcceda
+    e.tsv: 48c6f6645b031a5937c8386839debab0e2e48837251687ba1afb6369677f8546

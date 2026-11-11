@@ -1,6 +1,11 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (opening importer)
+- Built position pipeline step 3: `chess_training/openings.py` (pure build step + idempotent upsert), `scripts/get_openings.py` (pinned commit, checksum-verified), and `chess_training/fen.py` (`fen_key`, which the puzzle importer will reuse). It imports 7,717 positions and 8,499 source rows in about 8 seconds. 125 positions have more than one name, and none are unnamed. All are labelled opening (no endgames by move 10).
+- The user settled the ECO question: exact match line, otherwise nearest ancestor.
+- The schema tests used the position after 1.e4, which now exists in a filled bank. They switched to a bare-kings position no importer produces. The DB fixtures moved into conftest.py so other tests can share them.
+
 ## 2026-11-09 (phase labeller)
 - Built position pipeline step 2: `label_phase()` in `chess_training/phase.py`, with its numbers in the `phase:` section of `config.yaml` and 16 tests.
 - Planning found three gaps in spec §3: opening vs endgame overlap, queen endings and double-rook endings. The user settled all three: endgame wins, plus a limit of 2 pieces per side.
