@@ -8,7 +8,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | Spec | Created | Last revised | Status | Built |
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-09T09:22-08:00 | ready | not started (needs the position bank) |
-| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T11:03-08:00 | in progress | steps 1–3 of 6 (tables #9, phase labeller #10, opening importer #11) |
+| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T11:07-08:00 | in progress | steps 1–3 of 6 (tables #9, phase labeller #10, opening importer #11) |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-06T18:43-08:00 | draft | not started |
 
 ## challenge_mode_spec.md
@@ -23,7 +23,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
-| 2026-11-11T11:03-08:00 | **Built step 3:** the opening importer (`chess_training/openings.py`, `scripts/get_openings.py`), with the source pinned to lichess-org/chess-openings commit 3ba6b20. It imports 7,717 positions and 8,499 source rows. Spec §4 revised: the user decided that `opening_eco` is the ECO of the exactly matching line, otherwise the nearest named ancestor. Also recorded: "up to move 10" includes Black's 10th move, and equal-length names are broken alphabetically. | in progress | #11 |
+| 2026-11-11T11:07-08:00 | **Built step 3:** the opening importer (`chess_training/openings.py`, `scripts/get_openings.py`), with the source pinned to lichess-org/chess-openings commit 3ba6b20. It imports 7,717 positions and 8,499 source rows. Spec §4 revised: the user decided that `opening_eco` is the ECO of the exactly matching line, otherwise the nearest named ancestor. Also recorded: "up to move 10" includes Black's 10th move, and equal-length names are broken alphabetically. | in progress | #11 |
 | 2026-11-09T10:59-08:00 | **Built step 2:** the phase labeller (`chess_training/phase.py`). Spec §3 revised with the user's decisions: endgame is checked first and beats opening, and a side with at most 2 pieces counts towards an endgame as well as one with at most 8 points. | in progress | #10 |
 | 2026-11-09T10:04-08:00 | **Built step 1:** the `positions`, `position_sources` and `position_moves` tables (migration 0001). Spec revised: an opening's `source_ref` is the moves played to reach the position (user's decision, option A), because the full line's PGN would break the unique rule. | in progress | #9 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-09T09:22-08:00, the time of the design chat's last content change). No other change. | ready | #8 |

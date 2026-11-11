@@ -163,3 +163,14 @@ def test_writing_twice_changes_nothing(conn):
     pos, src = first
     assert len(pos) == 9
     assert {r.source_ref for r in src} >= set(data.sources)
+
+
+def test_existing_position_keeps_its_first_seen_fen(conn):
+    data = build(CARO_KANN)
+    write_import(conn, data)
+    key = key_after("e4", "c6")
+    first_fen = data.positions[key].fen
+    data.positions[key].fen = key + " 0 99"  # same board reached later by another source
+    write_import(conn, data)
+    stored = conn.execute(select(positions.c.fen).where(positions.c.fen_key == key)).scalar_one()
+    assert stored == first_fen
