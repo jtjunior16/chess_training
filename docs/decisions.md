@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: The 11 unplaced Lichess tags are not themes
+Asked: Should any of advancedPawn, attackingF2F7, castling, enPassant, exposedKing, kingsideAttack, queensideAttack, promotion, underPromotion, collinearMove, defensiveMove count as motif themes? Earlier today this was a placeholder.
+Chose (user): None of them. They stay in their own `puzzles.themes.unplaced` list in `config.yaml`, which the code treats as not themes. The earlier entry's placeholder is now decided.
+Why: Keeping the theme set to clear tactical motifs and mate patterns means challenge mode won't call puzzles "similar" for broad features like a kingside attack or a castling move.
+
 ## 2026-11-11: Puzzle sample: unplaced theme tags, even band totals, pinning the dump
 Asked: (1) Lichess's theme file has 11 tags that spec §5 places neither as motif themes nor as not-themes: advancedPawn, attackingF2F7, castling, enPassant, exposedKing, kingsideAttack, queensideAttack, promotion, underPromotion, collinearMove, defensiveMove. (2) "Fill the rest evenly across 200-point rating bands" can mean splitting the remaining slots equally, or making the final totals even. The floor picks cluster around common ratings. (3) Lichess serves only the latest puzzle dump, at a fixed URL. How do we keep imports reproducible?
 Chose: (1) The user chose to treat them as not themes for now (placeholder). They are kept in `puzzles.themes.unplaced` in `config.yaml`, so moving a tag to `motif` is a one-line change. The question goes to the design chat. Clear tactical motifs (fork, pin, sacrifice, deflection, hangingPiece, and so on) and every named mate pattern plus mateIn1–5 count as themes. (2) The user chose even final totals: water-filling over bands, counting the floor picks. A band short of puzzles gives its share to the others, and a leftover slot goes to the lowest band. (3) The SHA-256 and date of the 2026-11-01 dump are pinned in `config.yaml`. A newer dump fails the check until it is re-pinned on purpose. The sampler sorts candidates by PuzzleId and uses one numpy Generator with the configured seed, and the floor is filled rarest theme first.
