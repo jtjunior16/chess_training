@@ -16,6 +16,12 @@ uv run --env-file .env alembic upgrade head
 uv run python scripts/get_stockfish.py     # downloads the pinned Stockfish into tools/ (checksum-verified)
 ```
 
+### Fill the position bank
+```bash
+uv run python scripts/get_openings.py                     # pinned lichess-org/chess-openings TSVs into data/raw/
+uv run --env-file .env python -m chess_training.openings  # opening positions through move 10 (safe to re-run)
+```
+
 ## Run the game
 ```bash
 uv run uvicorn chess_training.app:app --reload

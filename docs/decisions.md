@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Opening importer: ECO per source row, the move-10 cutoff, name ties
+Asked: (1) Under option A (an opening's `source_ref` is the moves played so far), several named lines can share one source row. Which ECO code goes in `opening_eco`? (2) Does "up to move 10" include Black's 10th move? (3) Which name is primary when two are equally specific?
+Chose: (1) The user chose the ECO of the line whose end position matches exactly, otherwise the nearest named ancestor on the path. This is the same rule as the naming in spec §4, applied to one move sequence. (2) Yes: at most 20 half-moves, set by `openings.max_fullmove: 10` in `config.yaml`. (3) The alphabetically first name. Also: the source is pinned to lichess-org/chess-openings commit 3ba6b20 with a SHA-256 for each TSV, the same way as Stockfish. The importer upserts, so re-running it changes nothing, and a position keeps the FEN it was first imported with.
+Why: (1) The ECO then always agrees with the name the player sees for that move sequence. (2) Black's 10th move completes move 10, and both sides get the same depth. (3) A tie-break has to be deterministic so that imports can be reproduced. Alphabetical is the simplest.
+
 ## 2026-11-09: Phase labels: endgame beats opening, and a piece count joins the points rule
 Asked: The spec's phase rule (§3) didn't say which label wins when a position meets both the opening and the endgame test. Its points-only endgame rule (at most 8 points per side) labelled queen endings (9) and double-rook endings (10) as middlegame.
 Chose (user): Endgame is checked first and beats opening. A side also counts as endgame material with at most **2 pieces** (queens, rooks, bishops, knights), even if their points are higher. The limit was picked from 1, 2 or 3 per side: 1 would still leave double-rook endings as middlegame, and 3 would call positions like Q+R+B v Q+R+N endgames. All numbers are in `config.yaml`.

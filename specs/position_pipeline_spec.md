@@ -1,8 +1,8 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-09T10:59-08:00
+**Last revised:** 2026-11-11T11:03-08:00
 
-**Status: in progress** (steps 1–2 built 2026-11-09: the position bank tables and the phase labeller; steps 3–6 to go)
+**Status: in progress** (steps 1–3 built: the position bank tables and the phase labeller on 2026-11-09, the opening importer on 2026-11-11; steps 4–6 to go)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 
@@ -81,6 +81,8 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
   3. **Several matches** (transpositions, or different named ancestors): `opening_name` = the most specific one (the longest exact match); `opening_names` = all of them.
   - Never name a position after a longer line that merely passes through it. Example: the position after 1.e4 c6 is "Caro-Kann Defense", not a deep Advance Variation sub-line.
   - Why: naming by the longest line through a position labels early positions with variations the player hasn't reached. The list of all names allows filtering by opening later.
+- **ECO code (decided 2026-11-11, by the user, while building step 3).** Several named lines can share one source row, because a source row is the sequence of moves played so far. That row's `opening_eco` is the ECO of the line that names that path: the line whose end position matches exactly, otherwise the nearest named ancestor on the path. Same rule as the naming, applied to one move sequence.
+- **Details settled while building (2026-11-11):** "up to move 10" includes Black's 10th move (at most 20 half-moves; `openings.max_fullmove` in `config.yaml`). If two names are equally specific (same line length), the alphabetically first one is primary. A position keeps the FEN it was first imported with; re-running the importer refreshes its phase and names.
 
 ### 5. Puzzle importer
 - **Source:** the Lichess puzzle database (database.lichess.org, CC0, a zstd-compressed CSV). Columns: `PuzzleId, FEN, Moves, Rating, RatingDeviation, Popularity, NbPlays, Themes, GameUrl, OpeningTags`.
