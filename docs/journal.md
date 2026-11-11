@@ -1,6 +1,14 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (design chat round: move acceptance, challenge mode, scoring)
+- The design chat sent updated move_acceptance and challenge_mode specs (forced mates, the pass rule, what the player sees after a move), merged in #20, and a new scoring spec: accuracy %, no points.
+- Mistake, twice:
+  - The commit for #20 used `git add -A`, which swept in the design chat's brand-new `scoring_spec.md` (13:27 draft), unreviewed and unlogged.
+  - Then the 13:29 copy was reviewed, but the design chat overwrote it with 13:46 (status ready, §4–§7 added) before the commit. So #21's first records described a version that was never in git. The pr-reviewer caught it, and #21 now matches 13:46.
+  - Lessons: stage spec imports by file name, never with `git add -A`. Just before committing, check each staged spec's `Last revised` against the one reviewed (`git show :specs/<file> | head -3`).
+- Checked the scoring spec against the bank: there are 149 opening families over 7,717 named positions (about 50 each), so that breakdown isn't too thin. The 5,000 puzzle positions have no opening name and appear only in the other breakdowns. Attempts aren't stored yet, so building this spec needs a migration.
+
 ## 2026-11-11 (stop and resume the analysis)
 - The user wants to run the 4–5 hour analysis in short sessions. It was already resumable, but Ctrl+C with 10 worker processes on Windows could leave a mess (tracebacks, a hang, orphaned Stockfish processes).
 - Now: workers ignore Ctrl+C, Stockfish runs in its own process group, and the main process catches Ctrl+C (and Ctrl+Break), terminates the pool and prints "Stopped. … X of 12,715 done. Run the same command again to continue."

@@ -1,6 +1,30 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Move acceptance is ready to build with its placeholders
+Asked: Move acceptance still had G, L and the caching question open. Should building wait for them?
+Chose (user, in the design chat; spec Last revised 2026-11-11T13:46-08:00): No. The spec is **ready**. Build with G = 5 and L = 6 as placeholders, and tune them in a later design chat using the §6 tuning report once the full analysis has run. Caching the acceptable-set size is a performance detail: measure it once built and report back.
+Why: G and L can only be tuned with real acceptable-set sizes, which need the tuning report, which needs move acceptance built. Waiting would block everything.
+
+## 2026-11-11: Scoring is accuracy %, not points (new scoring spec from the design chat)
+Asked: How the player's progress is measured. This was the old P3 question: points for acceptable moves and for moves outside the set, scoring the "only good move" claim, and an overall points system.
+Chose (user, in the design chat; specs/scoring_spec.md, Last revised 2026-11-11T13:46-08:00, status **ready**):
+- **§1 Measure:** accuracy %, which is acceptable moves ÷ moves played. There are no points, no running score and no streaks, and a rating is set aside.
+- **§2 Two figures:** all-time, and recent = the last 50 attempts in each group (`scoring.recent_window`). Groups with fewer than 10 attempts show "not enough data yet" (`scoring.min_attempts`).
+- **§3 Breakdowns:** by phase, opening family (the primary name before the colon), side, difficulty (acceptable-set size) and puzzle theme (motif tags only). There is no source breakdown.
+- **§4 The "only good move" claim** is about the position, and is measured on its own:
+  - claim accuracy = correct claims ÷ claims;
+  - spotting rate = correct claims ÷ only-move positions seen.
+- **§5 Which attempts count:** every attempt in both modes, except a challenge-mode repeat. Repeats are still stored and marked.
+- **§6 Misses:** a non-acceptable move is a **close miss** if it is at most `blunder_line` win-% points below the best move, and a **blunder** otherwise. Figures are shown as acceptable / close miss / blunder shares.
+- **§7 What each attempt records:**
+  - the position, the move, the time and the mode;
+  - whether it was a challenge repeat, the side, and the claim;
+  - the result with its win-% loss.
+- **Ready now:** build with the placeholders. `blunder_line` (15) and the difficulty buckets are settled later, with G and L.
+Why: See the spec's "Why" lines. Accuracy shows understanding directly, and the breakdowns find weak areas, which is the project's goal. Two claim figures catch both claiming too often and claiming too rarely. Challenge repeats test memory, not understanding. The close miss / blunder split tells "nearly right" apart from "missed the tactic".
+Note: the 13:27 draft of this spec reached main inside PR #20 by accident. An intermediate 13:29 copy was reviewed but overwritten before it was committed. PR #21 imports 13:46.
+
 ## 2026-11-11: From the design chat: forced mates, challenge pass rule, what the player sees
 Asked: Three open questions in move_acceptance_spec: how to treat mates, whether challenge mode's pass rule becomes "in the acceptable set", and whether to show the whole acceptable set or the top 3. The design chat answered them, and the updated specs (Last revised 2026-11-11T13:20-08:00, newer than the repo copies) replaced the repo copies.
 Chose (user, in the design chat):
