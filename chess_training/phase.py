@@ -1,9 +1,13 @@
 """Phase labeller: opening / middlegame / endgame (specs/position_pipeline_spec.md §3).
 
 One rule for every source, checked in this order:
-1. Endgame: each side has at most `endgame_max_pieces_per_side` pieces, or at most
-   `endgame_max_points_per_side` points of them. Pieces are queens, rooks, bishops and
-   knights; kings and pawns never count. Endgame is checked first, so it beats opening.
+1. Endgame: every side passes at least one of these tests (checked per side):
+   - at most `endgame_max_pieces_per_side` pieces;
+   - at most `endgame_max_points_per_side` points of them;
+   - no queen and at most `endgame_max_pieces_per_side_without_queen` pieces (decided
+     2026-11-11: e.g. R+B+N without a queen is endgame material).
+   Pieces are queens, rooks, bishops and knights; kings and pawns never count. Endgame is
+   checked first, so it beats opening.
 2. Opening: the position comes from a named opening line, or its move number is below
    `opening_before_move`.
 3. Middlegame: everything else.
@@ -32,6 +36,7 @@ class PhaseSettings:
     opening_before_move: int
     endgame_max_pieces_per_side: int
     endgame_max_points_per_side: int
+    endgame_max_pieces_per_side_without_queen: int
     piece_values: dict[int, int]  # python-chess piece type -> points
 
     @classmethod
@@ -42,6 +47,9 @@ class PhaseSettings:
             opening_before_move=int(s["opening_before_move"]),
             endgame_max_pieces_per_side=int(s["endgame_max_pieces_per_side"]),
             endgame_max_points_per_side=int(s["endgame_max_points_per_side"]),
+            endgame_max_pieces_per_side_without_queen=int(
+                s["endgame_max_pieces_per_side_without_queen"]
+            ),
             piece_values={pt: int(values[name]) for pt, name in PIECE_NAMES.items()},
         )
 
@@ -58,15 +66,20 @@ def side_material(
     return pieces, points
 
 
+def side_is_endgame_material(
+    board: chess.Board, color: chess.Color, settings: PhaseSettings
+) -> bool:
+    pieces, points = side_material(board, color, settings)
+    no_queen = not board.pieces(chess.QUEEN, color)
+    return (
+        pieces <= settings.endgame_max_pieces_per_side
+        or points <= settings.endgame_max_points_per_side
+        or (no_queen and pieces <= settings.endgame_max_pieces_per_side_without_queen)
+    )
+
+
 def is_endgame(board: chess.Board, settings: PhaseSettings) -> bool:
-    for color in (chess.WHITE, chess.BLACK):
-        pieces, points = side_material(board, color, settings)
-        if (
-            pieces > settings.endgame_max_pieces_per_side
-            and points > settings.endgame_max_points_per_side
-        ):
-            return False
-    return True
+    return all(side_is_endgame_material(board, c, settings) for c in (chess.WHITE, chess.BLACK))
 
 
 def label_phase(

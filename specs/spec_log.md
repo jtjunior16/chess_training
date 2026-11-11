@@ -8,7 +8,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | Spec | Created | Last revised | Status | Built |
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-09T09:22-08:00 | ready | not started (needs the position bank) |
-| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T11:39-08:00 | in progress | steps 1–4 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13) |
+| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T11:42-08:00 | in progress | steps 1–4 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13) |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-06T18:43-08:00 | draft | not started |
 
 ## challenge_mode_spec.md
@@ -23,6 +23,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T11:42-08:00 | Open question settled by the user: §3's endgame rule gains a per-side "no queen, at most 3 pieces" test. Built with a relabeller (`chess_training/relabel_phases.py`) that moved 298 positions from middlegame to endgame. The Lichess endgame disagreement fell from 1,000 to 702 puzzles, almost all with queens on. No open questions remain. | in progress | #15 |
 | 2026-11-11T11:39-08:00 | Open question settled by the user: the 11 Lichess tags the spec didn't place (advancedPawn, attackingF2F7, castling, enPassant, exposedKing, kingsideAttack, queensideAttack, promotion, underPromotion, collinearMove, defensiveMove) are **not** themes. No code change: it was already the placeholder. | in progress | #14 |
 | 2026-11-11T11:29-08:00 | **Built step 4:** the puzzle importer (`chess_training/puzzles.py`, `scripts/get_puzzles.py`). It samples 5,000 of 4.48M filtered puzzles from the 2026-11-01 dump, pinned by checksum. §5 revised with the user's decisions: final band totals as even as possible; the 11 unplaced theme tags are not themes for now (placeholder). Two new open questions: the unplaced tags, and our endgame threshold against Lichess's, which disagree on 1,000 puzzles. | in progress | #13 |
 | 2026-11-11T11:22-08:00 | Updated while planning step 4: `position_sources` gets a `puzzle_opening_tags` column (migration 0002) for Lichess's `OpeningTags`, which §5 asked to store but §2 had no column for. The user chose a new column. | in progress | #12 |

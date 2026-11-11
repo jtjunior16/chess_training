@@ -1,6 +1,6 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-11T11:39-08:00
+**Last revised:** 2026-11-11T11:42-08:00
 
 **Status: in progress** (steps 1–4 built: the position bank tables and the phase labeller on 2026-11-09, the opening and puzzle importers on 2026-11-11; steps 5–6 to go)
 
@@ -62,13 +62,17 @@ Why one row per position plus a sources table: no duplicates. Challenge mode's "
 
 ### 3. Phase labeller
 One rule for every source. The thresholds live in `config.yaml`. Checked in this order:
-1. **Endgame:** each side has at most **2 pieces** (queens, rooks, bishops, knights; kings and pawns never count), **or** at most 8 points of them (Q=9, R=5, B/N=3, so at most a rook plus a bishop or knight).
+1. **Endgame:** each side, checked separately, passes at least one of these: at most **2 pieces**; at most 8 points of them (Q=9, R=5, B/N=3, so at most a rook plus a bishop or knight); or **no queen and at most 3 pieces**. Pieces are queens, rooks, bishops and knights. Kings and pawns never count.
 2. **Opening:** the position comes from a named opening line, or it is before move 12.
 3. **Middlegame:** everything else.
 
 Decided 2026-11-09 (by the user, while building step 2):
 - **Endgame beats opening.** If a position meets both tests (e.g. an early puzzle after heavy trades), it's an endgame.
 - **Piece count as well as points.** With points alone, queen endings (9) and double-rook endings (10) would be labelled middlegame. Few pieces left means endgame, even if their points are high. With these numbers, any side within the points limit is also within the piece limit (three pieces are at least 9 points), so in practice the piece count decides. The points test matters only if the piece limit or piece values change.
+
+Decided 2026-11-11 (by the user, after the puzzle importer's phase check, §5):
+- **No queen, up to 3 pieces.** A side without a queen counts as endgame material with up to 3 pieces (e.g. R+B+N), checked **per side**: Q+R v R+B+N is an endgame, but Q+R+B v Q+R+N is not. Why: the first puzzle run showed Lichess calling many 3-against-3 and 3-against-2 positions endgames that our 2-piece limit didn't. With queens on, 3 pieces still feels like a middlegame. `phase.endgame_max_pieces_per_side_without_queen: 3` in `config.yaml`.
+- After a rule change, `python -m chess_training.relabel_phases` recomputes every label in the bank. The importers label a board only when they first add it.
 
 Lichess's own puzzle phase tags are not used as labels. A test or report compares them with ours as a sanity check.
 
@@ -107,7 +111,7 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
   - "Fill the rest evenly" means the **final** per-band totals are as even as possible, floor picks included. A band short of puzzles gives its share to the others.
   - The dump is pinned by its SHA-256 (the 2026-11-01 dump). Lichess serves only the latest file, so a newer dump fails the check until it is re-pinned on purpose.
 - **First run (2026-11-11):** 4,482,593 puzzles passed the quality filter. Every motif theme reached the floor. Bands got 332–333 each, except 3200–3399, which has only 14 puzzles. No tag in the data was missing from the lists. Phase check, ours against Lichess's tag:
-  - Of the 2,623 puzzles Lichess tags "endgame", we label 1,623 endgame and 1,000 middlegame. 900 of those 1,000 have 3 pieces on one side against 3 or 2 on the other. Lichess's endgame line sits higher than our "at most 2 pieces each side" (see Open questions).
+  - Of the 2,623 puzzles Lichess tags "endgame", we label 1,623 endgame and 1,000 middlegame. 900 of those 1,000 have 3 pieces on one side against 3 or 2 on the other. Lichess's endgame line sits higher than our "at most 2 pieces each side". After the no-queen rule (§3), 702 remain, almost all with queens on (e.g. Q+R+R v Q+R+R).
   - 94 Lichess "opening" puzzles are middlegame for us (move 12 or later), and 35 Lichess "middlegame" puzzles are opening for us.
 - Why: scoring every legal move rules out all ~6 million puzzles. The floor keeps challenge mode's same-theme matching from running out on rare themes. The quality filter avoids spending engine time on broken puzzles. Phase, length, goal and origin tags are on almost every puzzle, so they'd make every puzzle "similar".
 
@@ -137,7 +141,7 @@ Why: it avoids committing to the fingerprint design before challenge mode exists
 | When to compute the fingerprint | Column now, filled when challenge mode is built | Unchanged: confirmed (§7) |
 
 ## Open questions
-- **Endgame threshold vs Lichess** (found 2026-11-11): 1,000 of the 5,000 sampled puzzles are Lichess "endgame" but our "middlegame", mostly 3 pieces against 3 or 2 (§5, first run). Keep §3's limit of 2 pieces per side, or raise it to 3? Placeholder: unchanged (2). It's `phase.endgame_max_pieces_per_side` in `config.yaml`.
+None for this spec.
 
 ## Out of scope for now
 - **Quiet positions from real Lichess games.** They need their own spec, because "quiet" isn't defined yet.

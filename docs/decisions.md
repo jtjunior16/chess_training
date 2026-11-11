@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Endgame rule: a side without a queen may have 3 pieces
+Asked: The puzzle importer's phase check found Lichess calling 1,000 of the 5,000 sampled puzzles endgames where we said middlegame. 900 of them had 3 pieces against 3 or 2. The options were to raise the limit to 3, to allow 3 only without queens, or to keep 2. A follow-up asked whether "without queens" applies per side or to the whole board.
+Chose (user): 3 pieces without queens, **per side**. A side passes the endgame test with at most 2 pieces, at most 8 points, or no queen and at most 3 pieces, and both sides must pass. So Q+R v R+B+N is an endgame, and Q+R+B v Q+R+N is not. The limit is `phase.endgame_max_pieces_per_side_without_queen: 3`. A new `chess_training/relabel_phases.py` recomputes every label after a rule change. It treats a position as "from a named line" if it has any `source = 'opening'` row, the same as the importers, and takes the move number from `positions.fen` (the FEN as first seen). To undo the rule, set the no-queen limit to 2 and relabel: with 2 it adds nothing to the 2-piece test. This supersedes the 2-piece-only rule from 2026-11-09 for queenless sides.
+Why: Positions like R+B+N v R+B+N play like endgames, but with queens on, 3 pieces still feel like a middlegame. That's why 3 was rejected outright on 2026-11-09. Result: 298 positions were relabelled middlegame → endgame, and the disagreement with Lichess fell to 702, almost all with queens on.
+
 ## 2026-11-11: The 11 unplaced Lichess tags are not themes
 Asked: Should any of advancedPawn, attackingF2F7, castling, enPassant, exposedKing, kingsideAttack, queensideAttack, promotion, underPromotion, collinearMove, defensiveMove count as motif themes? Earlier today this was a placeholder.
 Chose (user): None of them. They stay in their own `puzzles.themes.unplaced` list in `config.yaml`, which the code treats as not themes. The earlier entry's placeholder is now decided.
