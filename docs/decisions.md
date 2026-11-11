@@ -1,6 +1,19 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: From the design chat: forced mates, challenge pass rule, what the player sees
+Asked: Three open questions in move_acceptance_spec: how to treat mates, whether challenge mode's pass rule becomes "in the acceptable set", and whether to show the whole acceptable set or the top 3. The design chat answered them, and the updated specs (Last revised 2026-11-11T13:20-08:00, newer than the repo copies) replaced the repo copies.
+Chose (user, in the design chat):
+- **Forced mates (move acceptance §7):** if the best move forces mate, the acceptable set is exactly the moves that also force mate, at any length. A non-mating move is never acceptable then, and G and L don't apply.
+- **Challenge mode pass/fail (challenge mode §3):** a move passes if it is in the acceptable set, using the same function as normal mode's verdict.
+- **Display (move acceptance §8):**
+  - arrows for at most 3 acceptable moves;
+  - an always-shown verdict on the player's move;
+  - a count line;
+  - a "show all" toggle;
+  - in only-move positions, the 2nd-best move with a red or grey arrow and what it loses.
+Why: See the "Why" lines in both specs. In short: a slower mate still wins by force, one rule everywhere keeps the verdict and pass/fail consistent, and the old top 3 disagreed with the acceptable set.
+
 ## 2026-11-11: Batch analysis details
 Asked: Spec §6 leaves some details open: what "well above L" means for the deep-pass margin check, how to keep results reproducible across parallel workers, which "first 100 positions" to time, and how many workers to use.
 Chose (proposed in the build plan, approved by the user):
