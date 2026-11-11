@@ -41,3 +41,54 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 |---|---|---|---|
 | 2026-11-09 | Added the `Last revised` line (2026-11-06T18:43-08:00, the time of the design chat's last content change). No other change. | draft | #8 |
 | 2026-11-06 | Created: a gap-based acceptable-move rule in win %, replacing the fixed "top 3". G, L, mate handling and the challenge-mode pass rule are still open. | draft | #5 |
+
+## Pending design decisions (snapshot, 2026-11-11T12:55-08:00)
+_Every open question across the specs, for the design chat. In priority order. Each one runs on its stated placeholder until it is decided. Replace this snapshot when it goes out of date._
+
+**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), and the endgame rule (a side without a queen may have up to 3 pieces). The position pipeline spec has no open questions left.
+
+### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), draft). Blocks points.
+Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
+| Question | Placeholder now |
+|---|---|
+| **G**, the break size between consecutive moves (win-% points) | 5 (`move_acceptance.G` in `config.yaml`) |
+| **L**, the cap below the best move (win-% points) | 6. It must stay at or below 7.5, because the analysis deep pass covers moves within 15 of the best and checks deep_margin ≥ 2 × L |
+| Mates: is a slower mate, or a big non-mating win, acceptable when a mate exists? | No special case. Flag mate positions in the tuning report |
+| Challenge mode's pass rule = "move is in the acceptable set"? | Yes, once G and L are tuned |
+| Show the whole acceptable set, or keep the top 3 arrows? | Top 3 arrows plus "N moves were acceptable here" |
+| Cache the acceptable-set size per position, or compute it when needed? | Compute when needed |
+
+Suggested approach: settle the *method* now (for example, "pick G and L so that X% of positions are only-move positions"), and pick the numbers once the tuning report has real data.
+
+### 2. Scoring: points (no spec yet). Needs a new spec.
+- Points for a move in the acceptable set.
+- Points for moves outside it, for example graded by win-% loss.
+- Scoring the "only good move" claim: a correct claim, a wrong claim, and a missed one.
+- The overall points system: per position, per session, and any rating.
+
+### 3. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)
+| Question | Placeholder now |
+|---|---|
+| Pass vs fail | In the engine's top 3, or loses ≤ 0.3 pawns against the best move (overlaps with 1) |
+| Cap on run length (each failure adds 3 positions) | No cap. Max queue size is a config value, off by default |
+| Order of the items added to the queue | The 2 similar positions first, then the repeat |
+| Disguise repeats by flipping colours (middlegame and endgame only) | Off |
+| What the 15 are sampled from | All phases, uniformly at random |
+| Challenge length | 15 |
+
+### 4. Needed for step 6 (the game reads from the bank), no spec yet
+- **Choosing the next position:** random, by phase or opening, by difficulty (acceptable-set size), or something else. Placeholder if not decided: uniform random over bank positions that have legal moves.
+- **What the game shows after a move:**
+  - With stored scores it can show the top 3 and pawns lost, as it does now, with no engine wait.
+  - Should it also show how the position arose (`moves_to_position`, the opening name, the puzzle's source game)?
+- **Feedback after a bad move:** for example the refutation line. The bank stores scores but no lines (PVs). Showing lines would mean storing them, or running the engine live for that one move.
+- **Promotion picker** (the board currently can't choose a promotion piece).
+- Note, not a question: two bank positions are checkmates with no move to play (the ends of the named "Fool's Mate" and "Sea-Cadet Mate" lines). The game will skip them.
+
+### 5. Later
+- Defining "quiet" positions taken from real Lichess games (needs its own spec).
+- Difficulty matching to the player.
+- Accounts and stats.
+- Re-analysing the bank after an engine upgrade.
+- Extending openings past move 10.
+- Hosting.
