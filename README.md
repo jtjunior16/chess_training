@@ -27,6 +27,7 @@ uv run --env-file .env python -m chess_training.analysis --limit 100  # score ev
 uv run --env-file .env python -m chess_training.analysis              # the rest (~4–5 h in total)
 # Stop any time with Ctrl+C: finished positions are saved, and the same command continues.
 uv run --env-file .env python -m chess_training.acceptance_report  # move acceptance tuning report (G, L)
+uv run --env-file .env python -m chess_training.scoring            # your accuracy figures (also /api/stats)
 ```
 
 ## Run the game

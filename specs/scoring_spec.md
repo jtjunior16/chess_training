@@ -1,8 +1,8 @@
 # Feature spec: Scoring (how the player's progress is measured)
 
-**Last revised:** 2026-11-11T14:16-08:00
+**Last revised:** 2026-11-11T14:26-08:00
 
-**Status: ready** (decided 2026-11-11: build now with the placeholders under **Open questions**; they're decided later, see the note there)
+**Status: in progress** (2026-11-11: §1–§7 are built in `chess_training/scoring.py`: the attempts table (migration 0003), recording, the figures, recomputing, a text report and `/api/stats`. The Stats page and recording real moves come with the game reading from the bank (position pipeline step 6). The placeholders under **Open questions** still apply)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 >
@@ -78,6 +78,12 @@ Why: the user's decision. It tells two weaknesses apart: mostly close misses mea
 
 ### 7. What each attempt must record (follows from §1–6)
 Store every attempt, including challenge repeats, with at least: the position, the move played, the time, the mode (normal / challenge), whether it was a challenge repeat (§5), the side the player moved with, whether the claim box was ticked, and the result (acceptable / close miss / blunder) with the win-% loss. Phase, opening family, difficulty and themes can be looked up from the position. Store the result at the time of the attempt; if G, L or blunder_line change later, whether old attempts are recomputed is an open question.
+
+### Built 2026-11-11 (details settled while building, Claude's, flagged to the user)
+- **Difficulty and only-move** use each position's acceptable set under the *current* G and L, computed when the figures are made. The stored result is recomputed with `python -m chess_training.scoring --recompute` (the placeholder answer below).
+- **Minimum for the claim figures:** claim accuracy needs `min_attempts` claims, and the spotting rate needs `min_attempts` only-move positions seen. Each counts its own denominator, as §2 says.
+- **Recent claim figures** are computed within the same last `recent_window` counted attempts as accuracy.
+- **Figures are served as JSON at `/api/stats`** and printed by `python -m chess_training.scoring`. The Stats page itself waits for step 6's UI work.
 
 ## Open questions (do not decide. Use the placeholder and make it configurable)
 

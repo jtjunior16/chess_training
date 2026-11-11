@@ -177,3 +177,6 @@ scoring:
   # specs/scoring_spec.md (status: ready). PLACEHOLDER: blunder_line is an open question there,
   # settled together with G and L. Must stay <= analysis.deep_margin.
   blunder_line: 15     # win-% points below the best move: up to here a close miss, beyond a blunder
+  recent_window: 50    # "recent" = the last 50 counted attempts in each group (decided, §2)
+  min_attempts: 10     # fewer counted attempts than this: "not enough data yet" (decided, §2)
+  difficulty_buckets: [1, 4]   # PLACEHOLDER (open question): acceptable-set sizes 1 / 2-4 / 5+

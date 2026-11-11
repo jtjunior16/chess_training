@@ -4,7 +4,7 @@ _Last saved: 2026-11-11 11:31 · Overwritten by /project-format-toolkit:save-sta
 ## Where things stand
 - Playable skeleton: `uv run uvicorn chess_training.app:app --reload`, then open http://localhost:8000. Four hardcoded sample positions; shows the top 3 moves (arrows), the player's score and the pawns lost. No points yet.
 - Stack: FastAPI + python-chess + Stockfish 19 (pinned, downloaded by `scripts/get_stockfish.py` into tools/) + chessground 9.2.1 from a CDN. License GPL-3.0-or-later. Postgres 16 runs locally in Docker. The position bank (migrations 0001–0002) holds 7,717 opening positions and 5,000 puzzle positions. The README lists the commands that fill it.
-- Design lives in `specs/`: challenge mode = **ready** (needs the position bank), position pipeline = **in progress** (steps 1–5 of 6 done: the tables, the phase labeller, the opening and puzzle importers, and batch analysis. The full analysis run is pending: 172 of 12,715 positions are scored), move acceptance = **in progress** (rule, verdict and tuning report built; the §8 display comes with step 6), scoring = **ready** (build with placeholders; needs move acceptance and an `attempts` table). `specs/spec_log.md` records when each spec was created, updated and built. CLAUDE.md: build only what a spec marks Decided, and never settle its Open questions while coding.
+- Design lives in `specs/`: challenge mode = **ready** (needs the position bank), position pipeline = **in progress** (steps 1–5 of 6 done: the tables, the phase labeller, the opening and puzzle importers, and batch analysis. The full analysis run is pending: 172 of 12,715 positions are scored), move acceptance = **in progress** (rule, verdict and tuning report built; the §8 display comes with step 6), scoring = **in progress** (built; recording real moves and the Stats page come with step 6). `specs/spec_log.md` records when each spec was created, updated and built. CLAUDE.md: build only what a spec marks Decided, and never settle its Open questions while coding.
 - The user takes open questions to a separate design chat (Claude Desktop) and brings answers back as updated spec files.
 
 ## Unfinished work
@@ -12,7 +12,7 @@ _Last saved: 2026-11-11 11:31 · Overwritten by /project-format-toolkit:save-sta
 
 ## Next steps
 1. Full analysis run: `uv run --env-file .env python -m chess_training.analysis` (about 4–5 hours in total, uses 10 of 12 cores). It can run in sessions of any length: Ctrl+C stops it cleanly, and the same command continues.
-2. Then: re-run `python -m chess_training.acceptance_report` on the full bank for the design chat to tune G and L (tune on the opening grid), then scoring (needs an `attempts` table, i.e. a `data:` PR with an Alembic migration), plus position pipeline step 6 (the game reads from the bank; it must skip the 2 checkmate positions that end the Fool's Mate and Sea-Cadet Mate lines) → move acceptance (G and L are placeholders in `config.yaml`).
+2. Then: re-run `python -m chess_training.acceptance_report` on the full bank for the design chat to tune G and L (tune on the opening grid), then position pipeline step 6: the game reads from the bank, with verdicts and arrows (move acceptance §8), recording attempts and the Stats page. It must skip the 2 checkmate positions that end the Fool's Mate and Sea-Cadet Mate lines.
 
 ## Open questions
 Sent to the design chat in priority order:

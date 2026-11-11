@@ -1,6 +1,11 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (attempts table and scoring)
+- Migration 0003 adds `attempts` (#24). An attempted position can't be deleted (RESTRICT), which protects the player's history.
+- Built scoring §1–§7 (`chess_training/scoring.py`, #25): recording, the figures, the five breakdowns, the claim figures and recomputing, plus a CLI report and `/api/stats`. 16 tests on synthetic positions.
+- Nothing writes real attempts yet: today's game plays 4 hardcoded positions that aren't in the bank. Recording starts with step 6.
+
 ## 2026-11-11 (move acceptance)
 - Built the acceptable-set rule, the verdict and the tuning report while the analysis runs. They read stored scores only. Nothing touched `analysis.py` or the engine config, so a replacement worker can't load changed code.
 - First report (4,604 positions): **puzzles are 99% only-move positions** and their wrong moves are all blunders. **Openings are 15% only-move**, with a median of 8 acceptable moves and a third close misses. G and L only really matter for openings, so the report gained an openings-only G × L grid. There, L drives the set size (5 / 8 / 11) and G drives the only-move share (23% → about 10%).

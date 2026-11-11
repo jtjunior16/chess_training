@@ -1,6 +1,17 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Scoring build details
+Asked: Details scoring_spec leaves open while building §1–§7.
+Chose (Claude, flagged in PR #25):
+- **Difficulty and only-move** use each position's acceptable set under the current G and L, when the figures are made. Each stored result keeps the rule that judged it until `--recompute`.
+- **Minimums:** claim accuracy needs `min_attempts` claims, and the spotting rate needs `min_attempts` only-move positions seen.
+- **Recent claim figures** use the same last-50 window as accuracy.
+- **Output:** the figures are available as JSON (`/api/stats`) and as a text report (`python -m chess_training.scoring`). The Stats page waits for step 6.
+- **Recompute** re-judges with the current engine version's scores and updates `engine_version`.
+- **New config:** `scoring.recent_window: 50` and `min_attempts: 10` (both decided values), and `difficulty_buckets: [1, 4]` (a placeholder).
+Why: Using the current acceptable set keeps difficulty consistent with the verdicts the player sees today. Counting each claim figure against its own denominator is what §2's minimum means for claims.
+
 ## 2026-11-11: The attempts table (scoring §7)
 Asked: How to store the player's attempts for scoring.
 Chose (Claude, flagged in PR #24; the columns follow scoring §7):

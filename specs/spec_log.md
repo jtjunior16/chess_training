@@ -9,7 +9,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
-| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T14:16-08:00 | ready | not started (needs move acceptance and a table for attempts) |
+| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T14:26-08:00 | in progress | §1–§7 built (attempts table #24, scoring #25); the Stats page and real recording come with pipeline step 6 |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T14:05-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display comes with pipeline step 6 |
 
 ## challenge_mode_spec.md
@@ -42,6 +42,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T14:26-08:00 | **Built §1–§7:** the `attempts` table (migration 0003, #24), plus `record_attempt()`, the figures (acceptable / close miss / blunder shares, all-time and recent, minimum 10, five breakdowns, claim accuracy and spotting rate, repeats left out), `recompute_attempts()`, a text report and `/api/stats` (#25). Nothing records real moves yet. That and the Stats page come with pipeline step 6. | in progress | #25 |
 | 2026-11-11T14:16-08:00 | Decided by the user (a question found while building move acceptance): when the best move forces mate, a move that doesn't mate is **always a blunder** (§6), even though win % puts +8 only about 5 points below a mate. Built as `acceptance.miss_kind()`, which the tuning report uses now and scoring will use. | ready | #23 |
 | 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:27 copy in main). Build now with the placeholders. Decided since 13:27: recent = the last 50 attempts per group, with groups under 10 attempts showing "not enough data yet" (§2); breakdowns by phase, opening family, side, difficulty and puzzle theme, with no source breakdown (§3); the "only good move" claim measured as claim accuracy and spotting rate (§4); challenge-mode repeats don't count (§5); misses split into close misses and blunders at `blunder_line` (§6); what each attempt records (§7). Open, with placeholders: `blunder_line` (15), the difficulty buckets, opening click-through, combined breakdowns, recomputing old attempts, the Stats page layout, and the claim in challenge mode. An intermediate 13:29 copy (adding §3) was reviewed but never committed; the design chat overwrote it before the commit. | ready | #21 |
 | 2026-11-11T13:27-08:00 | Created in the design chat: progress is **accuracy %** (acceptable moves ÷ moves played), with no points, running score or streaks, each figure shown all-time and over a recent window. Imported by accident inside #20 (Claude's `git add -A` picked up the new file), so it wasn't logged then. | draft | #20 |
@@ -87,6 +88,8 @@ Small design choices (they don't block the build):
 | Recompute old attempts when G, L or blunder_line change? | Yes, from the stored move and scores |
 | Where the figures are shown | One Stats page: overall, then one table per breakdown |
 | Should a wrong or missed claim also fail a challenge position? | No |
+
+Note from building (a question for the design chat, not a placeholder): the **recent spotting rate** needs 10 only-move positions within the last 50 attempts of a group. Openings are about 15% only-move positions, so 50 opening attempts hold about 7, and the recent opening spotting rate will usually show "not enough data yet". Options: a larger window for claim figures, or a lower minimum for them.
 
 **For the design chat to fix:** move acceptance's open-questions note says the tuning report runs after "the full analysis run (position pipeline step 6)". The full analysis run belongs to step 5. Step 6 is the game reading from the bank.
 
