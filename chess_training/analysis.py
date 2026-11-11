@@ -23,6 +23,9 @@ from __future__ import annotations
 
 import argparse
 import multiprocessing as mp
+import signal
+import subprocess
+import sys
 import time
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, replace
@@ -219,13 +222,28 @@ def open_engine(settings: AnalysisSettings) -> chess.engine.SimpleEngine:
     path = engine_path()
     if not path.exists():
         raise FileNotFoundError(f"Stockfish not found at {path}. Run scripts/get_stockfish.py")
-    eng = chess.engine.SimpleEngine.popen_uci(str(path))
+    # Own process group: Ctrl+C in the terminal reaches only our Python processes, which then
+    # shut Stockfish down themselves (it also exits when its stdin closes).
+    if sys.platform == "win32":
+        group = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+    else:
+        group = {"start_new_session": True}
+    eng = chess.engine.SimpleEngine.popen_uci(str(path), **group)
     eng.configure({"Threads": settings.threads, "Hash": settings.hash_mb})
     return eng
 
 
-def _init_worker(settings: AnalysisSettings) -> None:
+def _ignore_interrupts() -> None:
+    """Workers leave Ctrl+C (and Ctrl+Break) to the main process, which stops them."""
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, signal.SIG_IGN)
+
+
+def _init_worker(settings: AnalysisSettings, ignore_interrupts: bool = True) -> None:
     global _worker_engine, _worker_settings
+    if ignore_interrupts:
+        _ignore_interrupts()
     _worker_settings = settings
     _worker_engine = open_engine(settings)
 
@@ -241,7 +259,7 @@ def run_parallel(
     tasks: list[tuple[int, str]], settings: AnalysisSettings
 ) -> Iterator[PositionResult | Failure]:
     if settings.workers <= 1:
-        _init_worker(settings)
+        _init_worker(settings, ignore_interrupts=False)
         try:
             for task in tasks:
                 yield _work(task)
@@ -331,33 +349,56 @@ def position_labels(conn: Connection, ids: list[int]) -> pd.DataFrame:
 STAT_COLUMNS = ["total_s", "quick_s", "deep_s", "legal_moves", "deep_moves"]
 
 
-def run(db: Engine, settings: AnalysisSettings, limit: int | None = None) -> pd.DataFrame:
+@dataclass
+class RunResult:
+    stats: pd.DataFrame
+    stopped: bool  # True if the user pressed Ctrl+C (or Ctrl+Break)
+
+
+def run(db: Engine, settings: AnalysisSettings, limit: int | None = None) -> RunResult:
     """Analyse pending positions; each result is committed as soon as it arrives.
 
-    A position that fails is logged and left pending, and the run carries on.
+    A position that fails is logged and left pending, and the run carries on. Ctrl+C stops the
+    run cleanly: the workers and their Stockfish processes are shut down, a save in progress is
+    rolled back as a whole, and the positions that were being analysed stay pending.
     """
     with db.connect() as conn:
         tasks = pending(conn, settings.engine_version, limit)
     records = []
-    for result in run_parallel(tasks, settings):
-        if isinstance(result, Failure):
-            print(f"FAILED position {result.position_id}: {result.error}", flush=True)
-            records.append({"id": result.position_id, "failed": True})
-            continue
-        with db.begin() as conn:
-            save(conn, result, settings.engine_version)
-        records.append(
-            {
-                "id": result.position_id,
-                "total_s": result.total_s,
-                "quick_s": result.quick_s,
-                "deep_s": result.deep_s,
-                "legal_moves": len(result.moves),
-                "deep_moves": result.deep_count,
-                "failed": False,
-            }
-        )
-    return pd.DataFrame(records, columns=["id", *STAT_COLUMNS, "failed"])
+    stopped = False
+    results = run_parallel(tasks, settings)
+    try:
+        for result in results:
+            _record(db, settings, result, records)
+    except KeyboardInterrupt:
+        stopped = True
+        print("\nStopping: shutting down the workers...", flush=True)
+    finally:
+        results.close()  # terminates the pool, or quits the single engine
+    return RunResult(pd.DataFrame(records, columns=["id", *STAT_COLUMNS, "failed"]), stopped)
+
+
+def _record(
+    db: Engine, settings: AnalysisSettings, result: PositionResult | Failure, records: list
+) -> None:
+    """Save one result (in its own transaction) and note its timings."""
+    if isinstance(result, Failure):
+        print(f"FAILED position {result.position_id}: {result.error}", flush=True)
+        records.append({"id": result.position_id, "failed": True})
+        return
+    with db.begin() as conn:
+        save(conn, result, settings.engine_version)
+    records.append(
+        {
+            "id": result.position_id,
+            "total_s": result.total_s,
+            "quick_s": result.quick_s,
+            "deep_s": result.deep_s,
+            "legal_moves": len(result.moves),
+            "deep_moves": result.deep_count,
+            "failed": False,
+        }
+    )
 
 
 def estimate_hours(done: pd.DataFrame, wall_s: float, remaining: pd.DataFrame) -> float:
@@ -410,6 +451,28 @@ def report(
     return "\n".join(lines)
 
 
+def progress(conn: Connection, engine_version: str, this_session: int, stopped: bool) -> str:
+    total = conn.execute(select(func.count()).select_from(positions)).scalar_one()
+    scorable = total - len(terminal_positions(conn))
+    done = conn.execute(
+        select(func.count(func.distinct(position_moves.c.position_id))).where(
+            position_moves.c.engine_version == engine_version
+        )
+    ).scalar_one()
+    head = "Stopped." if stopped else "Finished this run."
+    return (
+        f"{head} This session: {this_session:,} positions. "
+        f"Total: {done:,} of {scorable:,} done ({100 * done / max(scorable, 1):.0f}%). "
+        "Run the same command again to continue."
+        if done < scorable
+        else f"{head} This session: {this_session:,} positions. All {scorable:,} positions done."
+    )
+
+
+def _break_is_interrupt(signum, frame):  # Windows Ctrl+Break behaves like Ctrl+C
+    raise KeyboardInterrupt
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--limit", type=int, help="analyse at most this many positions")
@@ -420,13 +483,17 @@ def main() -> None:
         if args.workers < 1:
             parser.error("--workers must be at least 1")
         settings = replace(settings, workers=args.workers)
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, _break_is_interrupt)
     db = get_engine()
     t0 = time.perf_counter()
-    stats = run(db, settings, args.limit)
+    outcome = run(db, settings, args.limit)
+    stats = outcome.stats
     wall = time.perf_counter() - t0
     with db.connect() as conn:
         terminal = len(terminal_positions(conn))
-        if stats.empty:
+        done_now = int((~stats["failed"].astype(bool)).sum()) if not stats.empty else 0
+        if stats.empty and not outcome.stopped:
             print(
                 f"Nothing to analyse: every position has scores for {settings.engine_version} "
                 f"({terminal} positions with no legal moves are skipped)."
@@ -436,7 +503,10 @@ def main() -> None:
         labels = position_labels(conn, done_ids)
         left = [pid for pid, _ in pending(conn, settings.engine_version)]
         remaining = position_labels(conn, left).reset_index()
-    print(report(stats, labels, wall, remaining, settings.workers, terminal))
+        summary = progress(conn, settings.engine_version, done_now, outcome.stopped)
+    if not stats.empty:
+        print(report(stats, labels, wall, remaining, settings.workers, terminal))
+    print("\n" + summary)
 
 
 if __name__ == "__main__":
