@@ -1,6 +1,11 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (endgame rule without queens)
+- The user settled both open questions from the puzzle importer: the unplaced tags are not themes (#14), and endgames now allow 3 pieces for a side without a queen, checked per side.
+- Added `relabel_phases`, because the importers only label boards they add for the first time. It changed 298 positions (all middlegame → endgame), and a second run changed none.
+- The remaining 702 disagreements with Lichess are queen positions (Q+R+R v Q+R+R, Q+R+B v Q+R+N, and so on). That's deliberate.
+
 ## 2026-11-11 (puzzle importer)
 - Built position pipeline step 4: `chess_training/puzzles.py` and `scripts/get_puzzles.py`. It streams the 310 MB zstd dump (new dependency: `zstandard`; Python 3.13 has no built-in zstd), filters it to 4.48M puzzles, samples 5,000 and upserts them. The whole run takes about 45 seconds, and a second run adds nothing.
 - None of the 5,000 sampled boards were already in the bank from openings.

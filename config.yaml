@@ -10,9 +10,11 @@ data:
 
 phase:
   # Phase labeller (specs/position_pipeline_spec.md §3). Checked in order: endgame, opening, middlegame.
+  # Endgame tests are per side: every side must pass at least one of the three.
   # Pieces = queens, rooks, bishops, knights (kings and pawns never count).
   endgame_max_pieces_per_side: 2   # endgame if each side has at most this many pieces...
   endgame_max_points_per_side: 8   # ...or at most this many points of them
+  endgame_max_pieces_per_side_without_queen: 3   # ...or, with no queen, at most this many pieces
   opening_before_move: 12          # opening if from a named line, or move number below this
   piece_values:
     queen: 9
