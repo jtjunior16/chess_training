@@ -1,6 +1,14 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Scoring is accuracy %, not points (new scoring spec from the design chat)
+Asked: How the player's progress is measured. This was the old P3 question: points for acceptable moves and for moves outside the set, scoring the "only good move" claim, and an overall points system.
+Chose (user, in the design chat; specs/scoring_spec.md, Last revised 2026-11-11T13:29-08:00):
+- **Measure:** accuracy %, which is acceptable moves ÷ moves played. There are no points, no running score and no streaks, and a rating is set aside.
+- **Two figures:** every number is shown all-time and over a recent window.
+- **Breakdowns:** by phase, opening family (the primary name before the colon), side, difficulty (acceptable-set size) and puzzle theme (motif tags only). There is no source breakdown.
+Why: See the spec's "Why" lines. Accuracy shows understanding directly, and the breakdowns find weak areas, which is the project's goal. A running score shows effort, not skill. Note: the 13:27 draft of this spec reached main inside PR #20 by accident. It is logged properly in PR #21.
+
 ## 2026-11-11: From the design chat: forced mates, challenge pass rule, what the player sees
 Asked: Three open questions in move_acceptance_spec: how to treat mates, whether challenge mode's pass rule becomes "in the acceptable set", and whether to show the whole acceptable set or the top 3. The design chat answered them, and the updated specs (Last revised 2026-11-11T13:20-08:00, newer than the repo copies) replaced the repo copies.
 Chose (user, in the design chat):

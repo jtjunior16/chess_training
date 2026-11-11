@@ -9,6 +9,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
+| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T13:29-08:00 | draft | not started (needs move acceptance and a table for attempts) |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | draft | not started |
 
 ## challenge_mode_spec.md
@@ -37,6 +38,13 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | 2026-11-09 | Updated from the design chat, settling every open question: one row per unique position plus a `position_sources` table, opening names based on the moves actually played (primary name plus a list of all names), a filtered puzzle sample of 5,000 with at least 30 per motif theme, two-pass engine scoring (depth 10, then depth 18 near the best move), and the fingerprint filled in later. | ready | #7 |
 | 2026-11-06 | Created: build order, tables, phase labeller, opening and puzzle importers, batch analysis. Five open questions left with placeholders. | draft | #5 |
 
+## scoring_spec.md
+
+| Date | Event | Status after | PR |
+|---|---|---|---|
+| 2026-11-11T13:29-08:00 | Updated from the design chat, newer than the 2026-11-11T13:27-08:00 copy. Adds §3, the breakdowns: phase, opening family (the name before the colon), side, difficulty (acceptable-set size) and puzzle theme, with no source breakdown. New open questions: clicking through to full opening names, difficulty bucket boundaries, combined breakdowns, and average win-% lost. This row also logs the spec's creation, which wasn't logged at the time. | draft | #21 |
+| 2026-11-11T13:27-08:00 | Created in the design chat: progress is **accuracy %** (acceptable moves ÷ moves played), with no points, running score or streaks, each figure shown all-time and over a recent window. Imported by accident inside #20 (Claude's `git add -A` picked up the new file), so it wasn't logged then. | draft | #20 |
+
 ## move_acceptance_spec.md
 
 | Date | Event | Status after | PR |
@@ -60,11 +68,16 @@ Batch analysis will have scored every legal move of all 12,715 bank positions by
 
 Suggested approach: settle the *method* now (for example, "pick G and L so that X% of positions are only-move positions"), and pick the numbers once the tuning report has real data.
 
-### 2. Scoring: points (no spec yet). Needs a new spec.
-- Points for a move in the acceptable set.
-- Points for moves outside it, for example graded by win-% loss.
-- Scoring the "only good move" claim: a correct claim, a wrong claim, and a missed one.
-- The overall points system: per position, per session, and any rating.
+### 2. Scoring ([scoring_spec.md](scoring_spec.md), draft). Updated 2026-11-11T13:29: progress is accuracy %, not points
+| Question | Placeholder now |
+|---|---|
+| Click through from an opening family to its variations? | No |
+| Difficulty bucket boundaries (depend on G and L) | 1 / 2–4 / 5+ |
+| Combined breakdowns (e.g. Caro-Kann as Black) | No |
+| Size of the recent window | Last 50 attempts per group |
+| Which attempts count (repeats, challenge mode) | All, in both modes |
+| How the "only good move" claim is measured | Not measured yet |
+| Also show average win-% lost on non-acceptable moves? | No |
 
 ### 3. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)
 | Question | Placeholder now |

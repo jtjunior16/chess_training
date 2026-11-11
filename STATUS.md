@@ -21,5 +21,5 @@ Sent to the design chat in priority order:
 - ~~Unplaced Lichess tags~~ settled by the user on 2026-11-11: not themes.
 - ~~Endgame threshold vs Lichess~~ settled by the user on 2026-11-11: a side without a queen may have up to 3 pieces, checked per side (spec §3).
 - **P2, before points** (move_acceptance_spec): values of G and L (tune once the analysis finishes). Mate handling, the display and challenge mode's pass rule were settled in the design chat on 2026-11-11 (§7, §8; challenge mode §3).
-- **P3, no spec yet** (scoring): points for acceptable moves and for moves outside the set, scoring the "only good move" claim, the overall points system.
+- **P3, scoring_spec (draft, from the design chat 2026-11-11):** progress is accuracy %, with no points. Still open: click-through to full opening names, difficulty buckets, combined breakdowns, the recent-window size, which attempts count, measuring the "only good move" claim, and average win-% lost.
 - **P4, later**: defining quiet positions, choosing the next position, showing how a position arose, feedback after a bad move, difficulty matching, promotion picker, challenge-mode leftovers, accounts and stats, re-analysing after engine upgrades, extending openings, hosting.
