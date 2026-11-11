@@ -20,6 +20,6 @@ Sent to the design chat in priority order:
 - ~~ECO code for shared opening source rows~~ settled by the user on 2026-11-11: the exactly matching line, otherwise the nearest named ancestor (spec §4).
 - ~~Unplaced Lichess tags~~ settled by the user on 2026-11-11: not themes.
 - ~~Endgame threshold vs Lichess~~ settled by the user on 2026-11-11: a side without a queen may have up to 3 pieces, checked per side (spec §3).
-- **P2, before points** (move_acceptance_spec): values of G and L, mate handling, showing the accepted set vs the top 3, challenge mode's pass rule.
+- **P2, before points** (move_acceptance_spec): values of G and L (tune once the analysis finishes). Mate handling, the display and challenge mode's pass rule were settled in the design chat on 2026-11-11 (§7, §8; challenge mode §3).
 - **P3, no spec yet** (scoring): points for acceptable moves and for moves outside the set, scoring the "only good move" claim, the overall points system.
 - **P4, later**: defining quiet positions, choosing the next position, showing how a position arose, feedback after a bad move, difficulty matching, promotion picker, challenge-mode leftovers, accounts and stats, re-analysing after engine upgrades, extending openings, hosting.

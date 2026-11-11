@@ -7,14 +7,15 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Spec | Created | Last revised | Status | Built |
 |---|---|---|---|---|
-| [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-09T09:22-08:00 | ready | not started (needs the position bank) |
+| [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
-| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-06T18:43-08:00 | draft | not started |
+| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | draft | not started |
 
 ## challenge_mode_spec.md
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Pass/fail is decided: a move passes if it is in the acceptable set, the same function as normal mode's verdict (new §3). This replaces the "top 3 or ≤ 0.3 pawns" placeholder. | ready | #20 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-09T09:22-08:00, the time of the design chat's last content change). No other change. | ready | #8 |
 | 2026-11-09 | Updated from the design chat: when to compute the pawn fingerprint (backfill when challenge mode is built), only Lichess motif and mate-pattern tags count as themes, a "similar" puzzle shares at least one motif tag (more shared tags rank higher), and matching treats each unique position as one. | ready | #7 |
 | 2026-11-06 | Created: repeat queue, similar positions by pawn-structure fingerprint and puzzle theme. | ready | #4 |
@@ -40,13 +41,14 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Three open questions decided. Forced mates (new §7): when the best move forces mate, only moves that also force mate are acceptable, at any length. What the player sees (new §8): arrows for up to 3 acceptable moves, a verdict on the player's move, a count line, a "show all" toggle, and in only-move positions the 2nd-best move marked with what it loses. Challenge mode passes on the acceptable set (§4). Still open: G, L, and whether to cache the set size. | draft | #20 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-06T18:43-08:00, the time of the design chat's last content change). No other change. | draft | #8 |
 | 2026-11-06 | Created: a gap-based acceptable-move rule in win %, replacing the fixed "top 3". G, L, mate handling and the challenge-mode pass rule are still open. | draft | #5 |
 
-## Pending design decisions (snapshot, 2026-11-11T12:55-08:00)
+## Pending design decisions (snapshot, 2026-11-11T12:55-08:00, updated 2026-11-11T13:20-08:00)
 _Every open question across the specs, for the design chat. In priority order. Each one runs on its stated placeholder until it is decided. Replace this snapshot when it goes out of date._
 
-**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), and the endgame rule (a side without a queen may have up to 3 pieces). The position pipeline spec has no open questions left.
+**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), and, from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3). The position pipeline spec has no open questions left.
 
 ### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), draft). Blocks points.
 Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
@@ -54,9 +56,6 @@ Batch analysis will have scored every legal move of all 12,715 bank positions by
 |---|---|
 | **G**, the break size between consecutive moves (win-% points) | 5 (`move_acceptance.G` in `config.yaml`) |
 | **L**, the cap below the best move (win-% points) | 6. It must stay at or below 7.5, because the analysis deep pass covers moves within 15 of the best and checks deep_margin ≥ 2 × L |
-| Mates: is a slower mate, or a big non-mating win, acceptable when a mate exists? | No special case. Flag mate positions in the tuning report |
-| Challenge mode's pass rule = "move is in the acceptable set"? | Yes, once G and L are tuned |
-| Show the whole acceptable set, or keep the top 3 arrows? | Top 3 arrows plus "N moves were acceptable here" |
 | Cache the acceptable-set size per position, or compute it when needed? | Compute when needed |
 
 Suggested approach: settle the *method* now (for example, "pick G and L so that X% of positions are only-move positions"), and pick the numbers once the tuning report has real data.
@@ -70,7 +69,6 @@ Suggested approach: settle the *method* now (for example, "pick G and L so that 
 ### 3. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)
 | Question | Placeholder now |
 |---|---|
-| Pass vs fail | In the engine's top 3, or loses ≤ 0.3 pawns against the best move (overlaps with 1) |
 | Cap on run length (each failure adds 3 positions) | No cap. Max queue size is a config value, off by default |
 | Order of the items added to the queue | The 2 similar positions first, then the repeat |
 | Disguise repeats by flipping colours (middlegame and endgame only) | Off |
@@ -79,9 +77,7 @@ Suggested approach: settle the *method* now (for example, "pick G and L so that 
 
 ### 4. Needed for step 6 (the game reads from the bank), no spec yet
 - **Choosing the next position:** random, by phase or opening, by difficulty (acceptable-set size), or something else. Placeholder if not decided: uniform random over bank positions that have legal moves.
-- **What the game shows after a move:**
-  - With stored scores it can show the top 3 and pawns lost, as it does now, with no engine wait.
-  - Should it also show how the position arose (`moves_to_position`, the opening name, the puzzle's source game)?
+- **What the game shows after a move:** decided in move acceptance §8. Still open: should it also show how the position arose (`moves_to_position`, the opening name, the puzzle's source game)?
 - **Feedback after a bad move:** for example the refutation line. The bank stores scores but no lines (PVs). Showing lines would mean storing them, or running the engine live for that one move.
 - **Promotion picker** (the board currently can't choose a promotion piece).
 - Note, not a question: two bank positions are checkmates with no move to play (the ends of the named "Fool's Mate" and "Sea-Cadet Mate" lines). The game will skip them.

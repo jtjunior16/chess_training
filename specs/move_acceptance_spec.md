@@ -1,6 +1,6 @@
 # Feature spec: Move acceptance (which moves are "OK" in a position)
 
-**Last revised:** 2026-11-06T18:43-08:00
+**Last revised:** 2026-11-11T13:20-08:00
 
 **Status: draft** (the design chat still needs to settle the open questions)
 
@@ -45,6 +45,7 @@ Why the cap: without it, a slow chain (+0.20, +0.15, +0.10, …) never has a big
 
 ### 4. What the acceptable set is used for
 - **Judging a move:** a move is OK if it's in the acceptable set.
+- **Challenge mode pass/fail (decided 2026-11-11):** a move passes if it's in the acceptable set. Same function as normal mode's verdict. See [challenge_mode_spec.md](challenge_mode_spec.md) §3.
 - **"Only move" positions:** a position is an only-move position when its acceptable set has exactly **1** move. This gives the "only good move" checkbox a correct answer that comes from the data.
 - **Difficulty:** the size of the acceptable set (1 = hard, many = easy), usable later for choosing positions.
 
@@ -56,8 +57,30 @@ A command that computes acceptable sets for the whole bank and prints:
 - the distribution of acceptable-set sizes, split by phase and source (opening / puzzle)
 - the share of only-move positions per phase and source
 - a few example positions per set size
+- the positions where the best move is a forced mate (§7), and the positions where every move gets mated
 
 Use it to tune G and L with real data before awarding points.
+
+### 7. Forced mates (decided 2026-11-11)
+If the best move forces mate (`score_mate` > 0 from the mover's point of view), the acceptable set is **exactly the moves that also force mate, at any length**. G and L don't apply. Every move that doesn't force mate is not acceptable, however big its score.
+
+- Mate in 9 instead of mate in 2 is acceptable.
+- +8 (or any non-mating score) when a mate exists is **not** acceptable: it misses the mate.
+- If exactly one move forces mate, it's an only-move position (§4). A mate in 1 with two mating moves has an acceptable set of 2.
+- Use `score_mate`, not win%: under win% a mate (≈100) and +8 (≈95) are 5 points apart, right at G, so the result would depend on where G happens to sit.
+- The losing side (every move gets mated) has no special case: all moves are ≈0% and all are acceptable. The tuning report lists these positions (§6).
+
+Why: the user's decision. A slower forced mate still wins by force; a big non-mating win lets the mate go, which defeats the point of a mate puzzle.
+
+### 8. What the player sees after moving (decided 2026-11-11)
+This replaces the project's original "show the top 3 arrows" display.
+- **Arrows only for acceptable moves, at most 3** (the best ones). Apart from the only-move case below, an arrow never points at a move that isn't acceptable.
+- **A verdict on the player's move**, always shown, e.g. "Acceptable (7th of 12)" or "Not acceptable (lost 9 win-%)". This covers an acceptable move that has no arrow.
+- **The count line**, e.g. "12 moves were acceptable here".
+- **A "show all" toggle** that draws arrows for the whole acceptable set.
+- **Only-move positions also show the 2nd-best move** with a red/grey arrow, labelled with what it loses (e.g. "Nf3: −12 win-%"). It is the only arrow that ever points at a move that isn't acceptable, and its colour must make that obvious. Why (the user's decision): it lets the player ask "would I have wanted that move, and why is it bad?", which is the judgment the "only good move" claim is about.
+
+Why: the user's decision. The old top 3 disagreed with the acceptable set: in an only-move position, moves 2 and 3 got arrows although they weren't acceptable; with many acceptable moves, a player's acceptable 7th-ranked move had no arrow and looked wrong. Arrows for every acceptable move (up to 15 or more) would clutter the board, hence the cap and the toggle.
 
 ## Open questions (do not decide. Use the placeholder and make it configurable)
 
@@ -65,9 +88,6 @@ Use it to tune G and L with real data before awarding points.
 |---|---|
 | Value of **G** (break size) | 5 win-% points. (+1.0 → +0.8, which you called minor, is 1.8 points.) |
 | Value of **L** (cap below the best move) | 6 win-% points. Must stay below 7.3, the cost of +1.0 → +0.2, which you called a real loss. |
-| Mates: is a slower mate, or a big but non-mating win, acceptable when a mate exists? (Mate ≈ 100%, +8 ≈ 95%: a 5-point gap, right at G.) | Treat them like any other scores (no special case). Flag positions where the best move is a mate in the tuning report. |
-| Should challenge mode's pass rule become "move is in the acceptable set"? | Yes, once G and L are tuned. Until then challenge mode keeps its own placeholder. |
-| Show the player the whole acceptable set, or still the top 3? | Keep the top 3 arrows, plus a line such as "12 moves were acceptable here". |
 | Store the acceptable-set size per position (cached column), or compute it when needed? | Compute when needed. Add a cached column only if it's slow. |
 
 ## Out of scope for now

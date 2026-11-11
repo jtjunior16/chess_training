@@ -1,6 +1,6 @@
 # Feature spec: Challenge mode
 
-**Last revised:** 2026-11-09T09:22-08:00
+**Last revised:** 2026-11-11T13:20-08:00
 
 **Status: ready** (designed; needs the position bank from [position_pipeline_spec.md](position_pipeline_spec.md) before it can be built)
 
@@ -15,7 +15,7 @@ A "Challenge mode" button starts a run of 15 randomly sampled positions. Each mo
 1. The player clicks **Challenge mode**.
 2. The app samples **15 positions** at random from the position bank and puts them in a queue.
 3. The app shows the next position from the front of the queue. The player moves (the "only good move" claim works as in normal mode).
-4. The move is judged **pass** or **fail** (see Open questions for the rule).
+4. The move is judged **pass** or **fail** (see section 3).
 5. **Pass:** the position is done. Go to the next one.
 6. **Fail:** append to the **end** of the queue:
    - the same position again (the *repeat*), and
@@ -57,11 +57,15 @@ Two positions "share a fingerprint" when these features are equal. A "closest fi
 
 Why: pawn structure decides plans, so the same structure teaches judgment. Exact square matches are too rare and are usually near-copies of the same line, which invites memorization. For tactical misses, the theme is what the player got wrong. Requiring every motif tag to match would often find nothing.
 
+### 3. Pass or fail (decided 2026-11-11)
+A move **passes** if it is in the position's **acceptable set**, and **fails** otherwise. The acceptable set is defined in [move_acceptance_spec.md](move_acceptance_spec.md) (§2, the G/L rule, and §7, forced mates). Use the same function as normal mode's "Acceptable / Not acceptable" verdict; challenge mode has no rule of its own. The "only good move" claim doesn't affect pass or fail for now (that belongs to the scoring spec).
+
+Why: the user's decision. Challenge mode tests understanding, not a harder standard: the player must choose a move within G and L, the same thing normal mode calls acceptable. One rule everywhere means the verdict the player sees is the pass/fail, and tuning G and L changes both modes together. Replaces the placeholder "top 3 or loses ≤ 0.3 pawns", which passed bad moves in only-move positions and measured in pawns rather than win %.
+
 ## Open questions (do not decide. Use the placeholder and make it configurable)
 
 | Question | Placeholder for now |
 |---|---|
-| What counts as pass vs fail? (depends on the scoring thresholds, still undecided) | Pass = move is in the engine's top 3, OR loses ≤ 0.3 pawns compared with the best move. Keep it in one function / config value. |
 | Cap on run length (each failure adds 3 positions) | No cap, but make a max queue size a config value (default off). |
 | Order of the items added to the end of the queue | Add the 2 similar positions first, then the repeat (widens the gap before the repeat). Config flag. |
 | Disguise repeats by flipping the colors (middlegame/endgame only) | Off. |
