@@ -100,6 +100,9 @@ position_sources = Table(
     Column("puzzle_themes", ARRAY(Text)),
     Column("puzzle_popularity", Integer),
     Column("puzzle_nb_plays", Integer),
+    # The opening of the game the puzzle came from (Lichess OpeningTags). Informational only:
+    # never used for opening_name, which follows our own naming rule (spec §4). Migration 0002.
+    Column("puzzle_opening_tags", ARRAY(Text)),
     Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
     CheckConstraint(_in("source", SOURCES), name="source"),
     UniqueConstraint("source", "source_ref"),

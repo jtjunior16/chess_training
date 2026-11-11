@@ -1,6 +1,10 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-11 (puzzle opening tags column)
+- Planning the puzzle importer found that spec §5 asks to store `OpeningTags` but §2 has no column for them. Migration 0002 adds `position_sources.puzzle_opening_tags` (nullable, so no backfill).
+- Also settled while planning (they go in with the importer PR): the 11 theme tags the spec doesn't place are not themes for now (placeholder, sent to the design chat), and the rating bands are filled so that final totals are even.
+
 ## 2026-11-11 (opening importer)
 - Built position pipeline step 3: `chess_training/openings.py` (pure build step + idempotent upsert), `scripts/get_openings.py` (pinned commit, checksum-verified), and `chess_training/fen.py` (`fen_key`, which the puzzle importer will reuse). It imports 7,717 positions and 8,499 source rows in about 8 seconds. 125 positions have more than one name, and none are unnamed. All are labelled opening (no endgames by move 10).
 - The user settled the ECO question: exact match line, otherwise nearest ancestor.

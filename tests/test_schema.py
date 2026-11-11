@@ -137,3 +137,13 @@ def test_rows_need_an_existing_position(conn):
     missing = conn.execute(text("SELECT coalesce(max(id), 0) + 1000 FROM positions")).scalar_one()
     assert rejects(conn, add_source, missing)
     assert rejects(conn, add_move, missing)
+
+
+def test_puzzle_source_stores_opening_tags(conn):
+    pid = add_position(conn)
+    tags = ["Sicilian_Defense", "Sicilian_Defense_Najdorf_Variation"]
+    add_source(conn, pid, source="puzzle", puzzle_opening_tags=tags)
+    stored = conn.execute(
+        select(position_sources.c.puzzle_opening_tags).where(position_sources.c.position_id == pid)
+    ).scalar_one()
+    assert stored == tags

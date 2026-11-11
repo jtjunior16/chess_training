@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: Puzzle OpeningTags get their own column
+Asked: Spec §5 says to store each puzzle's Lichess `OpeningTags`, but §2 has no column for them, and `positions.opening_name` is reserved for our own naming (§4). Where should they go?
+Chose (user): A new nullable `text[]` column, `position_sources.puzzle_opening_tags`, added by migration 0002 in its own PR before the puzzle importer. Rejected: skipping it for now, or sending it to the design chat.
+Why: The tags belong to the puzzle's source game, not to the board, so they sit with the other `puzzle_*` source fields. Keeping them out of `opening_name` means our naming rule stays the only thing that names a position.
+
 ## 2026-11-11: Opening importer: ECO per source row, the move-10 cutoff, name ties
 Asked: (1) Under option A (an opening's `source_ref` is the moves played so far), several named lines can share one source row. Which ECO code goes in `opening_eco`? (2) Does "up to move 10" include Black's 10th move? (3) Which name is primary when two are equally specific?
 Chose: (1) The user chose the ECO of the line whose end position matches exactly, otherwise the nearest named ancestor on the path. This is the same rule as the naming in spec §4, applied to one move sequence. (2) and (3) were proposed in the build plan and approved by the user. (2) Yes: at most 20 half-moves, set by `openings.max_fullmove: 10` in `config.yaml`. (3) The alphabetically first name. Also: the source is pinned to lichess-org/chess-openings commit 3ba6b20 with a SHA-256 for each TSV, the same way as Stockfish. The importer upserts, so re-running it changes nothing, and a position keeps the FEN it was first imported with.
