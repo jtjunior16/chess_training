@@ -10,11 +10,14 @@ import os
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Identity,
+    Index,
     Integer,
     MetaData,
     PrimaryKeyConstraint,
@@ -127,6 +130,44 @@ position_moves = Table(
     Column("analysed_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
     PrimaryKeyConstraint("position_id", "uci", "engine_version"),
     CheckConstraint("(score_cp IS NULL) <> (score_mate IS NULL)", name="one_score"),
+)
+
+
+MODES = ("normal", "challenge")
+RESULTS = ("acceptable", "close miss", "blunder")
+
+# One row per move the player makes (specs/scoring_spec.md §7). Migration 0003.
+attempts = Table(
+    "attempts",
+    metadata,
+    Column("id", BigInteger, Identity(), primary_key=True),
+    # RESTRICT: a position with attempts can't be deleted, so the player's history is safe.
+    Column(
+        "position_id",
+        BigInteger,
+        ForeignKey("positions.id", ondelete="RESTRICT"),
+        nullable=False,
+    ),
+    Column("uci", Text, nullable=False),
+    Column("san", Text, nullable=False),
+    Column("played_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column("mode", Text, nullable=False),
+    # A challenge-mode repeat: the same failed position back in the same run (scoring §5).
+    # Stored, but left out of every figure.
+    Column("challenge_repeat", Boolean, nullable=False, server_default=text("false")),
+    Column("side", Text, nullable=False),  # the colour the player moved with
+    Column("claimed_only_move", Boolean, nullable=False),
+    # Result at the time of the attempt; recomputed if G, L or blunder_line change (§7).
+    Column("result", Text, nullable=False),
+    Column("win_loss", Float, nullable=False),  # win-% points below the best move
+    Column("engine_version", Text, nullable=False),  # which stored scores judged it
+    CheckConstraint(_in("mode", MODES), name="mode"),
+    CheckConstraint(_in("result", RESULTS), name="result"),
+    CheckConstraint("side IN ('w', 'b')", name="side"),
+    CheckConstraint("win_loss >= 0", name="win_loss_not_negative"),
+    CheckConstraint("mode = 'challenge' OR NOT challenge_repeat", name="repeat_only_in_challenge"),
+    Index("ix_attempts_position_id", "position_id"),
+    Index("ix_attempts_played_at", "played_at"),
 )
 
 

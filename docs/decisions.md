@@ -1,6 +1,16 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-11: The attempts table (scoring §7)
+Asked: How to store the player's attempts for scoring.
+Chose (Claude, flagged in PR #24; the columns follow scoring §7):
+- **One row per move:** position, UCI and SAN, `played_at`, `mode` (normal or challenge), `challenge_repeat`, `side`, `claimed_only_move`, `result` (acceptable / close miss / blunder), `win_loss` and `engine_version`.
+- **Checks:** a repeat is only allowed in challenge mode, and `win_loss` can't be negative.
+- **Not stored:** phase, opening family, difficulty and themes. They're looked up from the position, as §7 says.
+- **The position link uses ON DELETE RESTRICT,** not CASCADE. A position the player has attempted can't be deleted.
+- **No player column:** accounts are out of scope, so there's one local player.
+Why: The attempt history is the player's own data and must not vanish when a position bank import is undone. The cost: the importers' rollback SQL fails for attempted positions, which is the safe direction. `engine_version` records which stored scores judged each attempt, so recomputing later knows what changed.
+
 ## 2026-11-11: Missing a forced mate is always a blunder
 Asked: When the best move forces mate, a big non-mating move (e.g. +8, about 95 win-%) is only about 5 win-% below the mate (about 100). So scoring spec §6's split at `blunder_line` (15) counted it as a close miss. Should missing a forced mate always be a blunder?
 Chose (user): Yes. When the best move forces mate, any move that doesn't mate is a blunder, whatever its score and wherever `blunder_line` is. Built in `chess_training/acceptance.py` as `miss_kind()`, which the tuning report uses now and scoring will use later. Scoring spec §6 is updated (Last revised 2026-11-11T14:16-08:00).

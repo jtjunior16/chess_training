@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import func, insert, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
-from chess_training.db import metadata, position_moves, position_sources, positions
+from chess_training.db import attempts, metadata, position_moves, position_sources, positions
 
 # Rows that no importer produces, so the tests never collide with an imported bank.
 BARE_KINGS = "8/8/8/4k3/8/8/8/4K3 b - -"
@@ -147,3 +147,57 @@ def test_puzzle_source_stores_opening_tags(conn):
         select(position_sources.c.puzzle_opening_tags).where(position_sources.c.position_id == pid)
     ).scalar_one()
     assert stored == tags
+
+
+def add_attempt(conn, position_id, **kw):
+    values = {
+        "position_id": position_id,
+        "uci": "e7e5",
+        "san": "e5",
+        "mode": "normal",
+        "side": "b",
+        "claimed_only_move": False,
+        "result": "acceptable",
+        "win_loss": 0.0,
+        "engine_version": "sf_19",
+    } | kw
+    return conn.execute(insert(attempts).values(values).returning(attempts.c.id)).scalar_one()
+
+
+def test_attempt_inserts_with_defaults(conn):
+    pid = add_position(conn)
+    aid = add_attempt(conn, pid)
+    row = conn.execute(select(attempts).where(attempts.c.id == aid)).one()
+    assert row.challenge_repeat is False and row.played_at is not None
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"mode": "blitz"},
+        {"result": "inaccuracy"},
+        {"side": "x"},
+        {"win_loss": -1.0},
+        {"mode": "normal", "challenge_repeat": True},  # repeats exist only in challenge mode
+    ],
+)
+def test_attempt_checks(conn, values):
+    pid = add_position(conn)
+    assert rejects(conn, add_attempt, pid, **values)
+
+
+def test_challenge_repeat_is_allowed_in_challenge_mode(conn):
+    pid = add_position(conn)
+    add_attempt(conn, pid, mode="challenge", challenge_repeat=True, result="blunder", win_loss=30)
+
+
+def test_a_position_with_attempts_cannot_be_deleted(conn):
+    pid = add_position(conn)
+    add_attempt(conn, pid)
+    try:
+        with conn.begin_nested():
+            conn.execute(positions.delete().where(positions.c.id == pid))
+        deleted = True
+    except IntegrityError:
+        deleted = False
+    assert not deleted
