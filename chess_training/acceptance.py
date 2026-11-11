@@ -120,9 +120,13 @@ class Verdict:
     forced_mate: bool  # the best move forces mate
 
     def text(self) -> str:
-        """e.g. "Acceptable (7th of 12)" or "Not acceptable (lost 9 win-%)"."""
+        """e.g. "Acceptable (7th of 12)", "Not acceptable (lost 9 win-%)", or, when the best
+        move mates and this one doesn't, "Not acceptable (misses the mate)"."""
         if self.acceptable:
             return f"Acceptable ({_ordinal(self.rank)} of {self.acceptable_count})"
+        if self.forced_mate:
+            # Win % can't express this (a +25 move is about 100 win-% too): say what happened.
+            return "Not acceptable (misses the mate)"
         return f"Not acceptable (lost {self.win_loss:.0f} win-%)"
 
 

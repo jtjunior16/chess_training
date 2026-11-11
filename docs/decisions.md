@@ -10,7 +10,11 @@ Chose (Claude, flagged to the user in the PR):
 - **The tuning report adds:**
   - the blunder_line split (scoring spec §6 asked for it);
   - G × L grids for all positions and for openings only.
-- **Config:** `scoring.blunder_line: 15` is added now (a placeholder) for the report.
+- **Config:** `scoring.blunder_line: 15` is added now (a placeholder) for the report. Its rule `blunder_line <= analysis.deep_margin` is only a comment for now. The check belongs in `analysis.check_config`, which stays untouched while the analysis runs.
+- **Missed mates:** the verdict reads "Not acceptable (misses the mate)" instead of a win-% loss, because win % can't show it (a +25 move is about 100 win-% too). Whether a missed mate counts as a blunder in scoring is sent to the design chat.
+- **Report details:**
+  - positions with both an opening and a puzzle source count as openings in the openings-only grid;
+  - the "of N positions" denominator leaves out checkmate and stalemate positions.
 - **Not built yet:** the §8 display, which comes with pipeline step 6.
 Why: A deterministic order keeps verdicts stable between runs. The opening grid is there because puzzles are about 99% only-move positions whatever G and L are, so an overall grid hides what G and L do.
 

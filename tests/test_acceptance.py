@@ -26,8 +26,10 @@ def mate(uci: str, n: int) -> ScoredMove:
     return ScoredMove(uci, uci, None, n)
 
 
-def test_settings_come_from_config():
-    assert AcceptanceSettings.from_config() == AcceptanceSettings(G=5, L=6)
+def test_settings_are_read_from_a_config_section():
+    assert AcceptanceSettings.from_config({"G": 4, "L": 7.5}) == AcceptanceSettings(G=4, L=7.5)
+    live = AcceptanceSettings.from_config()
+    assert 0 < live.G and 0 < live.L
 
 
 # ---------------------------------------------------------------- the spec's worked examples (§3)
@@ -131,6 +133,13 @@ def test_ordinals(n, text):
     )
 
 
+def test_missing_a_mate_says_so_rather_than_a_win_loss():
+    acc = acceptable_set([mate("m", 1), cp("huge", 2500)], S)
+    v = judge(acc, "huge")
+    assert not v.acceptable
+    assert v.text() == "Not acceptable (misses the mate)"
+
+
 def test_unknown_move_is_an_error():
     with pytest.raises(ValueError):
         judge(acceptable_set([cp("a", 0)], S), "zz")
@@ -141,7 +150,7 @@ def test_unknown_move_is_an_error():
 VERSION = "test-acceptance"
 
 
-def add_position(conn, key, phase, source, ref, moves, name=None):
+def add_position(conn, key, phase, source, ref, moves, name=None, extra_source=None):
     pid = conn.execute(
         insert(positions)
         .values(fen=key + " 0 30", fen_key=key, side_to_move="w", phase=phase, opening_name=name)
@@ -156,6 +165,16 @@ def add_position(conn, key, phase, source, ref, moves, name=None):
             moves_to_position=["e4"],
         )
     )
+    if extra_source:
+        conn.execute(
+            insert(position_sources).values(
+                position_id=pid,
+                source=extra_source[0],
+                source_ref=extra_source[1],
+                fullmove_number=30,
+                moves_to_position=["e4"],
+            )
+        )
     for m in moves:
         conn.execute(
             insert(position_moves).values(
@@ -201,3 +220,45 @@ def test_report_runs_on_stored_positions(conn):
     text = report(bank, S, 15, examples=1, total_positions=2)
     assert "Best move forces mate" in text and "Test Opening" in text
     assert "only-move share" in text
+
+
+def test_report_covers_both_sources_all_mated_and_the_blunder_line(conn):
+    # Best 0 cp (50%). -100 cp is 40.9%: 9.1 below, past G, so not acceptable but within
+    # blunder_line (a close miss). -600 cp is about 40 below: a blunder.
+    add_position(
+        conn,
+        "acc-both",
+        "opening",
+        "opening",
+        "acc-o-both",
+        [cp("a", 0), cp("near", -100), cp("far", -600)],
+        name="Both Opening",
+        extra_source=("puzzle", "acc-p-both"),
+    )
+    add_position(
+        conn, "acc-mated", "endgame", "puzzle", "acc-p-mated", [mate("x", -1), mate("y", -2)]
+    )
+    bank = load_bank(conn, VERSION)
+    assert {p.source for p in bank} == {"both", "puzzle"}
+    df, losses, _ = summarise(bank, S, blunder_line=15)
+    assert int(df["all_mated"].sum()) == 1
+    # "near" is 9.1 below the best (<= 15): close miss; "far" is about 40 below: blunder.
+    assert sorted(losses["kind"]) == ["blunder", "close miss"]
+    text = report(bank, S, 15, examples=1, total_positions=2)
+    assert "opening positions only" in text and "Both Opening" in text
+
+
+def test_scorable_positions_leave_out_mates(conn):
+    from chess_training.acceptance_report import scorable_positions
+
+    before = scorable_positions(conn)
+    for fen, key in [
+        ("7k/8/8/8/8/8/8/K7 w - - 0 70", "acc-scorable-kings"),  # legal moves: counts
+        ("7k/6Q1/6K1/8/8/8/8/8 b - - 0 70", "acc-scorable-mated"),  # checkmate: doesn't
+    ]:
+        conn.execute(
+            insert(positions).values(
+                fen=fen, fen_key=key, side_to_move=fen.split()[1], phase="endgame"
+            )
+        )
+    assert scorable_positions(conn) == before + 1

@@ -60,7 +60,9 @@ _Every open question across the specs, for the design chat. In priority order. E
 
 **Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3); and at 13:46 the scoring spec's §1–§7 (accuracy %, the recent window, breakdowns, the claim figures, which attempts count, and close misses vs blunders), with scoring and move acceptance both marked ready. The position pipeline spec has no open questions left.
 
-### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), rule and tuning report **built** 14:04, G and L are placeholders)
+### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), rule and tuning report **built** 14:05, G and L are placeholders)
+**New question (found while building):** when the best move mates, a big non-mating move (e.g. +8) is only about 5 win-% below the mate, so scoring §6 counts it as a **close miss**, not a blunder. Should missing a forced mate always be a blunder? Placeholder: as written (a close miss when within `blunder_line`). The verdict text already says "misses the mate".
+
 Tuning aid: `python -m chess_training.acceptance_report`. On partial data, puzzles are about 99% only-move positions whatever G and L are, so tune on the **opening grid**: L sets the set size (median 5 / 8 / 11 for L = 4 / 6 / 7.5), and G sets the only-move share (23% at G = 3 down to about 10% at G = 8).
 Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
 | Question | Placeholder now |

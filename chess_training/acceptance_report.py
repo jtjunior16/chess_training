@@ -80,7 +80,10 @@ def load_bank(conn: Connection, engine_version: str) -> list[BankPosition]:
         d = info.setdefault(pid, {"fen": fen, "phase": phase, "sources": set(), "label": None})
         d["sources"].add(source)
         if d["label"] is None:
-            d["label"] = name if source == "opening" and name else f"puzzle {ref}"
+            if source == "opening":
+                d["label"] = name or f"opening line {ref}"
+            else:
+                d["label"] = f"puzzle {ref}"
     bank = []
     for pid in sorted(moves):
         d = info[pid]
@@ -218,7 +221,8 @@ def report(
             )
 
     # Puzzles are nearly all only-move positions whatever G and L are, so they swamp the
-    # overall grid; the opening grid is the one that shows what G and L change.
+    # overall grid; the opening grid is the one that shows what G and L change. Positions
+    # with both an opening and a puzzle source count as openings here.
     openings = [p for p in bank if p.source in ("opening", "both")]
     lines += ["", grid(bank, settings), "", grid(openings, settings, "opening positions only")]
     return "\n".join(lines)
