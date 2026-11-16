@@ -156,7 +156,6 @@ def add_attempt(conn, position_id, **kw):
         "san": "e5",
         "mode": "normal",
         "side": "b",
-        "claimed_only_move": False,
         "result": "acceptable",
         "win_loss": 0.0,
         "engine_version": "sf_19",

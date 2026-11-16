@@ -136,7 +136,8 @@ position_moves = Table(
 MODES = ("normal", "challenge")
 RESULTS = ("acceptable", "close miss", "blunder")
 
-# One row per move the player makes (specs/scoring_spec.md §7). Migration 0003.
+# One row per move the player makes (specs/scoring_spec.md §7). Migration 0003; 0004 dropped
+# claimed_only_move when the "only good move" claim was removed (§4).
 attempts = Table(
     "attempts",
     metadata,
@@ -156,7 +157,6 @@ attempts = Table(
     # Stored, but left out of every figure.
     Column("challenge_repeat", Boolean, nullable=False, server_default=text("false")),
     Column("side", Text, nullable=False),  # the colour the player moved with
-    Column("claimed_only_move", Boolean, nullable=False),
     # Result at the time of the attempt; recomputed if G, L or blunder_line change (§7).
     Column("result", Text, nullable=False),
     Column("win_loss", Float, nullable=False),  # win-% points below the best move

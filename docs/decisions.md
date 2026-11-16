@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-16: Drop attempts.claimed_only_move (migration 0004)
+Asked: With the "only good move" claim removed (scoring §4), should `attempts.claimed_only_move` be dropped by a migration or left in place unused? The spec left this to Claude Code.
+Chose (Claude, flagged in PRs #30 and #31): Drop it, in two steps. First the code stopped reading the column and wrote false (#30), then migration 0004 dropped it (#31). Downgrade re-adds it as NOT NULL with default false.
+Why: The table had 0 rows, so dropping lost nothing. An unused NOT NULL column would make every insert keep writing a meaningless value, and readers would wonder what it means. Two PRs keep each one a single change, and main works after each.
+
 ## 2026-11-16: The design chat runs in a second Claude Code tab, writing only to an inbox outside the repo
 Asked: Can design decisions be made in parallel with development, in two Claude Code chat windows in VS Code?
 Chose (user): Two Claude Code tabs in the same VS Code window, replacing the Claude Desktop design chat of 2026-11-06. Both tabs share one folder and one git checkout, so:

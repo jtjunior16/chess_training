@@ -135,9 +135,6 @@ def record_attempt(
             mode=mode,
             challenge_repeat=challenge_repeat,
             side=side,
-            # The claim was removed (scoring §4, 2026-11-16). Migration 0004 drops this column;
-            # until then it is NOT NULL, so write false.
-            claimed_only_move=False,
             result=kind,
             win_loss=verdict.win_loss,
             engine_version=version,
