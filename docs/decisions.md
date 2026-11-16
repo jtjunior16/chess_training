@@ -1,6 +1,11 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-16: Win-% losses are shown with one decimal
+Asked: With L = 5, the h4 move in bank #4671 loses 5.24 win-% and is not acceptable, but its verdict read "Not acceptable (lost 5 win-%)", as if a loss of 5 failed. Show one decimal?
+Chose (user): Yes. The verdict reads "Not acceptable (lost 5.2 win-%)", and the 2nd-best label likewise ("Nf3: −12.3 win-%"). Move acceptance §4 and §8 give whole-number examples ("lost 9 win-%", "−12 win-%"); only the precision changes, not the wording.
+Why: A whole number hides which side of the cap a move fell on when the loss is close to L.
+
 ## 2026-11-16: Drop attempts.claimed_only_move (migration 0004)
 Asked: With the "only good move" claim removed (scoring §4), should `attempts.claimed_only_move` be dropped by a migration or left in place unused? The spec left this to Claude Code.
 Chose (Claude, flagged in PRs #30 and #31): Drop it, in two steps. First the code stopped reading the column and wrote false (#30), then migration 0004 dropped it (#31). Downgrade re-adds it as NOT NULL with default false.

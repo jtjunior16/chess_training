@@ -120,7 +120,14 @@ def test_verdict_for_a_bad_move():
     v = judge(acc, "bad")
     assert not v.acceptable and v.only_move
     assert v.win_loss == pytest.approx(9.1, abs=0.1)
-    assert v.text() == "Not acceptable (lost 9 win-%)"
+    assert v.text() == "Not acceptable (lost 9.1 win-%)"
+
+
+def test_verdict_just_over_the_cap_shows_the_decimal():
+    # Bank #4671: Bb5 +0.30, h4 -0.27 is 5.24 below. With L = 5 it is out, and "lost 5"
+    # would look like it was within the cap.
+    acc = acceptable_set([cp("bb5", 30), cp("h4", -27)], AcceptanceSettings(G=5, L=5))
+    assert judge(acc, "h4").text() == "Not acceptable (lost 5.2 win-%)"
 
 
 @pytest.mark.parametrize(

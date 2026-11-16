@@ -68,7 +68,7 @@ def test_only_move_position_shows_the_second_best_with_its_loss():
     s = r["second_best"]
     assert s["uci"] == "next"
     assert s["win_loss"] == pytest.approx(25.0, abs=1)  # +3.00 is about 75 win-%, 0.00 is 50
-    assert s["label"] == f"NEXT: −{s['win_loss']:.0f} win-%"
+    assert s["label"] == f"NEXT: −{s['win_loss']:.1f} win-%"
 
 
 def test_second_best_that_misses_a_mate_says_so():
