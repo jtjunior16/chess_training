@@ -1,6 +1,16 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-16: The design chat runs in a second Claude Code tab, writing only to an inbox outside the repo
+Asked: Can design decisions be made in parallel with development, in two Claude Code chat windows in VS Code?
+Chose (user): Two Claude Code tabs in the same VS Code window, replacing the Claude Desktop design chat of 2026-11-06. Both tabs share one folder and one git checkout, so:
+- **The design tab changes nothing in the repo.** It runs no git command that changes state, and no migrations, importers or analysis. It may run read-only SELECTs and the tuning report, and it never reads `.env`.
+- **It reads specs as they are on main** (`git show main:specs/<file>`), because the working folder may be on a dev branch with unmerged spec edits.
+- **It writes specs only to `../chess_design_inbox/`,** a folder next to the repo, using the spec's file name and a fresh `Last revised` at save time. It starts each edit from main's copy.
+- **Handoff goes through the user.** The dev tab imports a spec by file name on its own `docs/` branch from main. It checks each staged spec's `Last revised` against the inbox copy, logs the import, merges, then rebases any feature branch onto main.
+- The prompt that starts the design tab spells out these rules, its agenda, and the spec format.
+Why: Two tabs on one checkout conflict only if both write to it. On 2026-11-11 a `git add -A` swept a brand-new spec from the design chat into a commit, unreviewed. Keeping the design tab's writes outside the repo removes that risk, and the existing timestamp rule (2026-11-09) still catches a spec that changed on both sides. A git worktree for the design tab was considered and not needed, because design work writes only specs.
+
 ## 2026-11-16: G = L = 5, blunder_line = 15, four difficulty buckets, no "only good move" checkbox
 Asked: The questions that needed the full bank's data: the values of G and L (move acceptance), `blunder_line` and the difficulty buckets (scoring). Also whether the "only good move" checkbox is worth keeping, now that the data shows what it measures.
 Chose (user, in the design chat; specs Last revised 2026-11-16T12:45-08:00):
