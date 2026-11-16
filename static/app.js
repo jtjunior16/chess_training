@@ -62,7 +62,11 @@ async function loadPosition() {
   $("only-move").disabled = false;
 
   $("meta").textContent = [position.phase, position.opening].filter(Boolean).join(" · ");
-  $("prompt").textContent = `${position.turn === "white" ? "White" : "Black"} to move.`;
+  // A badge in the side's own colour, so it's clear at a glance who the player is.
+  const side = document.createElement("span");
+  side.className = `turn turn-${position.turn}`;
+  side.textContent = `${position.turn === "white" ? "White" : "Black"} to move`;
+  $("prompt").replaceChildren(side);
 
   const config = {
     fen: position.fen,
