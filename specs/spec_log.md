@@ -8,9 +8,9 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | Spec | Created | Last revised | Status | Built |
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
-| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-11T12:21-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run pending |
+| [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-16T11:42-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run done; step 6 part 1 of 3 (the game reads from the bank, #26) |
 | [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T14:26-08:00 | in progress | §1–§7 built (attempts table #24, scoring #25); the Stats page and real recording come with pipeline step 6 |
-| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-11T14:05-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display comes with pipeline step 6 |
+| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-16T11:42-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display (#26); G and L still placeholders |
 
 ## challenge_mode_spec.md
 
@@ -25,6 +25,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T11:42-08:00 | **Built step 6, part 1 of 3:** the game reads from the bank (`chess_training/game.py`); the hardcoded positions and the live engine are removed. Only positions with stored scores are served, so the two checkmate boards are left out and the positions one move before them are played. Also recorded: the full analysis run finished on 2026-11-11 (12,715 positions). Step 6 is split into 3 PRs: this one, recording attempts, the Stats page. | in progress | #26 |
 | 2026-11-11T12:21-08:00 | Batch analysis can be stopped with Ctrl+C and resumed, so the full run can be done in short sessions (the user's request). §6 note added. | in progress | #18 |
 | 2026-11-11T12:03-08:00 | **Built step 5:** batch engine analysis (`chess_training/analysis.py`, `chess_training/winpct.py`). The first 150 positions took 154 s with 10 workers; weighted by the bank's mix, the full bank is estimated at about 4–5 hours. Two checkmate positions (the ends of the named Fool's Mate and Sea-Cadet Mate lines) are skipped. Opening positions are the costly ones (about 14 moves per position get the deep pass). §6 revised with the details approved in the build plan: deep_margin ≥ 2 × L, the hash cleared per position, a fixed shuffled run order. | in progress | #16 |
 | 2026-11-11T11:42-08:00 | Open question settled by the user: §3's endgame rule gains a per-side "no queen, at most 3 pieces" test. Built with a relabeller (`chess_training/relabel_phases.py`) that moved 298 positions from middlegame to endgame. The Lichess endgame disagreement fell from 1,000 to 702 puzzles, almost all with queens on. No open questions remain. | in progress | #15 |
@@ -51,6 +52,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T11:42-08:00 | **Built §8:** what the player sees after moving: the verdict, the count line, arrows for at most 3 acceptable moves, a "show all" toggle, and in only-move positions the 2nd-best move in red with its loss ("misses the mate" when the best move mates). G and L are still placeholders; the full-bank tuning report is ready for the design chat. | in progress | #26 |
 | 2026-11-11T14:05-08:00 | **Built:** the acceptable-set rule (§2, with forced mates per §7), the verdict on a move (§4, e.g. "Acceptable (7th of 12)") and the §6 tuning report, plus a blunder_line split and G × L grids (overall and openings only). First numbers on partial data: puzzles 99% only-move, openings 15% with a median of 8 acceptable moves, so G and L should be tuned on openings. The §8 display waits for pipeline step 6. | in progress | #22 |
 | 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:20 copy). Build now with the G and L placeholders. They are tuned in a later design chat from the §6 tuning report, run after the full analysis. Caching the set size is a performance detail to measure once built. | ready | #21 |
 | 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Three open questions decided. Forced mates (new §7): when the best move forces mate, only moves that also force mate are acceptable, at any length. What the player sees (new §8): arrows for up to 3 acceptable moves, a verdict on the player's move, a count line, a "show all" toggle, and in only-move positions the 2nd-best move marked with what it loses. Challenge mode passes on the acceptable set (§4). Still open: G, L, and whether to cache the set size. | draft | #20 |

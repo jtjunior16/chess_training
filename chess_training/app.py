@@ -1,51 +1,100 @@
 """FastAPI app: serves the board page and the game API.
 
-Run: uv run uvicorn chess_training.app:app --reload   then open http://localhost:8000
+The game plays positions from the bank and judges moves from their stored scores, so no
+engine runs while the player plays (specs/position_pipeline_spec.md §6, step 6).
+
+Run: uv run --env-file .env uvicorn chess_training.app:app --reload   then open http://localhost:8000
 """
 
 from __future__ import annotations
 
 import random
-from contextlib import asynccontextmanager
+from collections.abc import Iterator
+from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
+from typing import Annotated
 
 import chess
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import Connection
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 
-from chess_training.engine import Engine
-from chess_training.positions import BY_ID, SAMPLES
+from chess_training.acceptance import AcceptanceSettings, acceptable_set, load_moves
+from chess_training.config import load_config
+from chess_training.game import (
+    GameSettings,
+    is_playable,
+    load_position,
+    move_result,
+    pick_position_id,
+    playable_ids,
+    position_payload,
+)
 from chess_training.scoring import stats as scoring_stats
 
 STATIC = Path(__file__).resolve().parents[1] / "static"
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    app.state.engine = Engine()
-    try:
-        yield
-    finally:
-        app.state.engine.close()
-
-
-app = FastAPI(title="chess_training", lifespan=lifespan)
+app = FastAPI(title="chess_training")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
-def legal_dests(board: chess.Board) -> dict[str, list[str]]:
-    """Legal moves as {from_square: [to_squares]}, the shape chessground expects."""
-    dests: dict[str, list[str]] = {}
-    for m in board.legal_moves:
-        dests.setdefault(chess.square_name(m.from_square), [])
-        to = chess.square_name(m.to_square)
-        if to not in dests[chess.square_name(m.from_square)]:
-            dests[chess.square_name(m.from_square)].append(to)
-    return dests
+@app.exception_handler(OperationalError)
+@app.exception_handler(InterfaceError)
+def _database_error(request: Request, exc: DBAPIError) -> JSONResponse:
+    """The database is down or unreachable. Other database errors (a constraint violation, a
+    bad query) are bugs and stay 500s, so they don't look like an outage."""
+    return JSONResponse(
+        status_code=503, content={"detail": f"Database unavailable: {type(exc).__name__}"}
+    )
+
+
+@cache
+def _db():
+    """One SQLAlchemy engine (and connection pool) for the app, created on first use."""
+    from chess_training.db import get_engine
+
+    return get_engine()
+
+
+def get_conn() -> Iterator[Connection]:
+    """A database connection for one request. Tests override this with a rolled-back one."""
+    try:
+        engine = _db()
+    except RuntimeError as exc:  # DATABASE_URL not set
+        raise HTTPException(503, str(exc)) from exc
+    with engine.connect() as conn:
+        yield conn
+
+
+@dataclass(frozen=True)
+class GameConfig:
+    acceptance: AcceptanceSettings
+    game: GameSettings
+    engine_version: str
+
+
+@cache
+def _game_config() -> GameConfig:
+    return GameConfig(
+        acceptance=AcceptanceSettings.from_config(),
+        game=GameSettings.from_config(),
+        engine_version=load_config()["engine"]["version"],
+    )
+
+
+def get_game_config() -> GameConfig:
+    """The settings the game runs with. Tests override this to use their own engine version."""
+    return _game_config()
+
+
+DbConn = Annotated[Connection, Depends(get_conn)]
+Config = Annotated[GameConfig, Depends(get_game_config)]
+
+_rng = random.Random()
 
 
 @app.get("/")
@@ -54,24 +103,25 @@ def index() -> FileResponse:
 
 
 @app.get("/api/position")
-def get_position(id: str | None = None) -> dict:
-    if id is not None and id not in BY_ID:
+def get_position(conn: DbConn, cfg: Config, id: int | None = None) -> dict:
+    picked = id is None
+    if picked:
+        # Lists every playable id (~90 ms on the full bank). Fine locally; cache it if the
+        # bank or the traffic grows.
+        try:
+            id = pick_position_id(playable_ids(conn, cfg.engine_version), cfg.game, _rng)
+        except LookupError as exc:
+            raise HTTPException(503, str(exc)) from exc
+    row = load_position(conn, id)
+    if row is None:
         raise HTTPException(404, f"Unknown position id: {id}")
-    pos = BY_ID[id] if id else random.choice(SAMPLES)
-    board = chess.Board(pos.fen)
-    return {
-        "id": pos.id,
-        "fen": pos.fen,
-        "turn": "white" if board.turn == chess.WHITE else "black",
-        "phase": pos.phase,
-        "opening": pos.opening,
-        "description": pos.description,
-        "dests": legal_dests(board),
-    }
+    if not picked and not is_playable(conn, id, cfg.engine_version):
+        raise HTTPException(404, f"Position {id} has no stored scores (or no legal moves)")
+    return position_payload(row)
 
 
 class MoveRequest(BaseModel):
-    fen: str
+    position_id: int
     move: str  # UCI, e.g. "e2e4"; a missing promotion piece defaults to queen
     only_move: bool = False  # the player's "this is the only good move" claim
 
@@ -81,6 +131,7 @@ def parse_move(board: chess.Board, uci: str) -> chess.Move:
         move = chess.Move.from_uci(uci)
     except ValueError as exc:
         raise HTTPException(400, f"Not a UCI move: {uci}") from exc
+    # PLACEHOLDER (STATUS.md P4, promotion picker): a promotion without a piece is a queen.
     if (
         move.promotion is None
         and board.piece_type_at(move.from_square) == chess.PAWN
@@ -93,56 +144,27 @@ def parse_move(board: chess.Board, uci: str) -> chess.Move:
 
 
 @app.post("/api/move")
-def post_move(req: MoveRequest, request: Request) -> dict:
+def post_move(
+    req: MoveRequest,
+    conn: DbConn,
+    cfg: Config,
+) -> dict:
+    row = load_position(conn, req.position_id)
+    if row is None:
+        raise HTTPException(404, f"Unknown position id: {req.position_id}")
+    move = parse_move(chess.Board(row.fen), req.move)
+    moves = load_moves(conn, req.position_id, cfg.engine_version)
+    if not moves:
+        raise HTTPException(404, f"Position {req.position_id} has no stored scores")
+    acc = acceptable_set(moves, cfg.acceptance)
     try:
-        board = chess.Board(req.fen)
-    except ValueError as exc:
-        raise HTTPException(400, "Invalid FEN") from exc
-    if not board.is_valid():
-        raise HTTPException(400, "Invalid FEN")
-    move = parse_move(board, req.move)
-
-    engine: Engine = request.app.state.engine
-    top = engine.top_moves(board)
-    # Reuse the top-line score when the player found one, so "loss" is exactly 0 for the best
-    # move and identical scores aren't compared across two separate searches.
-    player = next((line for line in top if line.move == move), None)
-    in_top = player is not None
-    if player is None:
-        player = engine.score_move(board, move)
-
-    best_cp = top[0].score.as_cp()
-    loss_cp = max(0, best_cp - player.score.as_cp())
-    gap_cp = best_cp - top[1].score.as_cp() if len(top) > 1 else None
-
-    return {
-        "player": player.to_dict(),
-        "in_top": in_top,
-        "rank": next((i + 1 for i, line in enumerate(top) if line.move == move), None),
-        "top": [line.to_dict() for line in top],
-        "loss_cp": loss_cp,
-        # How far the best move is ahead of the 2nd best; a large gap suggests an "only move".
-        # Thresholds for scoring are not decided yet, so we report the number only.
-        "gap_cp": gap_cp,
-        "only_move_claim": req.only_move,
-    }
-
-
-@cache
-def _db():
-    """One SQLAlchemy engine (and connection pool) for the app, created on first use."""
-    from chess_training.db import get_engine
-
-    return get_engine()
+        result = move_result(acc, move.uci(), cfg.game)
+    except ValueError as exc:  # a legal move without a stored score: the analysis is incomplete
+        raise HTTPException(409, str(exc)) from exc
+    return {**result, "only_move_claim": req.only_move}
 
 
 @app.get("/api/stats")
-def get_stats() -> dict:
+def get_stats(conn: DbConn) -> dict:
     """The player's accuracy figures (specs/scoring_spec.md). Needs the database."""
-    try:
-        with _db().connect() as conn:
-            return scoring_stats(conn)
-    except RuntimeError as exc:  # DATABASE_URL not set
-        raise HTTPException(503, str(exc)) from exc
-    except SQLAlchemyError as exc:  # database down or unreachable
-        raise HTTPException(503, f"Database unavailable: {type(exc).__name__}") from exc
+    return scoring_stats(conn)

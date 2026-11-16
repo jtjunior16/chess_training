@@ -1,3 +1,7 @@
+/* `hidden` must win over any `display` rule below (e.g. .show-all's display: block). */
+[hidden] {
+  display: none !important;
+}
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
@@ -26,6 +30,22 @@ h1 {
   color: #bababa;
   text-transform: capitalize;
 }
+.turn {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  border: 2px solid #888;
+}
+.turn-white {
+  background: #f5f5f5;
+  color: #111;
+}
+.turn-black {
+  background: #000;
+  color: #f5f5f5;
+}
 .only-move {
   display: block;
   font-weight: 600;
@@ -48,9 +68,15 @@ h1 {
 .top li.green::marker { color: #15781b; }
 .top li.blue::marker { color: #003088; }
 .top li.yellow::marker { color: #e68f00; }
-.pv {
-  color: #9a9a9a;
-  font-size: 0.85rem;
+.verdict.good { color: #8fd18f; }
+.verdict.bad { color: #f08a7e; }
+.second {
+  border-left: 3px solid #882020;
+  padding-left: 0.5rem;
+}
+.show-all {
+  display: block;
+  margin: 0 0 1rem;
 }
 button {
   font-size: 1rem;

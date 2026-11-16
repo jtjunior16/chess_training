@@ -1,6 +1,24 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-16: The game reads from the bank (pipeline step 6, part 1 of 3)
+Asked: How the game should serve bank positions and show move acceptance §8, and what to do about details no spec covers yet.
+Chose (plan approved by the user; details flagged in the PR):
+- **Step 6 is split into 3 PRs:** the game from the bank with the §8 display, then recording attempts, then the Stats page.
+- **Playable positions** are the ones with stored scores for the current engine version. That leaves out the 2 boards with no legal moves (the checkmates ending Fool's Mate and Sea-Cadet Mate). The positions one move earlier, with the mate to find, are served (#51 and #4781).
+- **No engine runs in the game.** `chess_training/engine.py`, its tests, `engine.multipv` and the 4 hardcoded positions (`positions.py`) are removed. Stockfish is still downloaded for the batch analysis. A git revert brings the live engine back if it is ever wanted.
+- **Placeholders, not settled (STATUS.md P4, for the design chat):**
+  - the next position is uniformly random over every playable position (`game.position_choice: random`), about 61% openings;
+  - before the move, the page shows only the phase and the opening name; puzzle theme tags stay hidden because they would give the answer away;
+  - promotion is still always to a queen.
+- **Display details (Claude):**
+  - arrows green, blue and yellow for acceptable moves 1–3, pale green for the rest with "show all", red for the 2nd-best move in an only-move position;
+  - the toggle appears only when the set is larger than `game.max_arrows` (3);
+  - when the best move mates and the 2nd-best doesn't, the 2nd-best's label reads "misses the mate", as the verdict does;
+  - `?id=<position id>` in the page URL serves one bank position, for checking.
+- **The database and settings are FastAPI dependencies,** so tests play made-up positions inside a rolled-back transaction. A legal move without a stored score answers 409, and a missing database answers 503.
+Why: Stored scores keep the verdict, the arrows and scoring consistent (pipeline spec §6). Using "has stored scores" as the playable test needs no extra list and also covers positions analysis couldn't score. The P4 questions belong to the design chat, so each placeholder is one config value or one function.
+
 ## 2026-11-11: Scoring build details
 Asked: Details scoring_spec leaves open while building §1–§7.
 Chose (Claude, flagged in PR #25):

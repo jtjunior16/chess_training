@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import replace
 
 import pytest
@@ -223,12 +222,10 @@ def test_recompute_after_g_changes(conn, sc):
 # ---------------------------------------------------------------- API
 
 
-def test_stats_endpoint_returns_the_structure():
-    if not os.environ.get("DATABASE_URL"):
-        pytest.skip("DATABASE_URL not set")
+def test_stats_endpoint_returns_the_structure(conn):
     from chess_training.app import get_stats as endpoint
 
-    s = endpoint()
+    s = endpoint(conn)
     assert set(s) == {"overall", "breakdowns", "settings", "skipped_unscored"}
     assert set(s["breakdowns"]) == {"phase", "opening family", "side", "difficulty", "puzzle theme"}
 

@@ -1,35 +1,72 @@
-// Board page: load a position, let the player move, then show the engine's top moves.
+// Board page: load a bank position, let the player move, then show the verdict and the
+// acceptable moves (specs/move_acceptance_spec.md §8). All scores come from the server.
 import { Chessground } from "https://cdn.jsdelivr.net/npm/chessground@9.2.1/dist/chessground.js";
 
 const $ = (id) => document.getElementById(id);
-const BRUSHES = ["green", "blue", "yellow"]; // arrows for engine moves #1, #2, #3
+const BRUSHES = ["green", "blue", "yellow"]; // arrows for acceptable moves #1, #2, #3
+const MORE_BRUSH = "paleGreen"; // the rest of the acceptable set, with "show all"
+const SECOND_BRUSH = "red"; // the 2nd-best move in an only-move position: NOT acceptable
 
 let cg = null;
 let position = null;
+let result = null;
 
-function formatScore(score) {
-  // Scores are from the player's point of view (the side to move).
-  if (score.mate !== null) return score.mate > 0 ? `mate in ${score.mate}` : `mated in ${-score.mate}`;
-  const pawns = score.cp / 100;
+function formatScore(m) {
+  // Scores are from the mover's point of view (the side to move).
+  if (m.score_mate !== null) return m.score_mate > 0 ? `mate in ${m.score_mate}` : `mated in ${-m.score_mate}`;
+  const pawns = m.score_cp / 100;
   return (pawns > 0 ? "+" : "") + pawns.toFixed(2);
 }
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+}
+
+const arrow = (m, brush) => ({ orig: m.uci.slice(0, 2), dest: m.uci.slice(2, 4), brush });
+
+// fetch + JSON that never throws: errors (including non-JSON ones, e.g. a plain-text 500)
+// come back as { ok: false, error }.
+async function fetchJson(url, options) {
+  try {
+    const res = await fetch(url, options);
+    const text = await res.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      /* not JSON */
+    }
+    if (res.ok && data) return { ok: true, data };
+    return { ok: false, error: data?.detail ?? `${res.status} ${res.statusText}` };
+  } catch (e) {
+    return { ok: false, error: `cannot reach the server (${e.message})` };
+  }
 }
 
 async function loadPosition() {
-  const res = await fetch("/api/position");
-  position = await res.json();
+  // ?id=123 in the page URL serves that bank position (handy for checking one).
+  const id = new URLSearchParams(location.search).get("id");
+  const got = await fetchJson(id ? `/api/position?id=${encodeURIComponent(id)}` : "/api/position");
+  if (!got.ok) {
+    $("prompt").textContent = `Error: ${got.error}. Press "Next position" to try again.`;
+    return;
+  }
+  position = got.data;
+  result = null;
 
   $("result").hidden = true;
   $("result").innerHTML = "";
+  $("show-all-label").hidden = true;
+  $("show-all").checked = false;
   $("only-move").checked = false;
   $("only-move").disabled = false;
 
-  const label = [position.phase, position.opening].filter(Boolean).join(" · ");
-  $("meta").textContent = label;
-  $("prompt").textContent = `${position.turn === "white" ? "White" : "Black"} to move. ${position.description}`;
+  $("meta").textContent = [position.phase, position.opening].filter(Boolean).join(" · ");
+  // A badge in the side's own colour, so it's clear at a glance who the player is.
+  const side = document.createElement("span");
+  side.className = `turn turn-${position.turn}`;
+  side.textContent = `${position.turn === "white" ? "White" : "Black"} to move`;
+  $("prompt").replaceChildren(side);
 
   const config = {
     fen: position.fen,
@@ -53,49 +90,57 @@ async function onMove(orig, dest) {
   cg.set({ movable: { color: undefined, dests: new Map() } }); // lock the board
   $("only-move").disabled = true;
   $("result").hidden = false;
-  $("result").textContent = "Thinking…";
+  $("result").textContent = "Checking…";
 
-  const res = await fetch("/api/move", {
+  const got = await fetchJson("/api/move", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fen: position.fen, move: orig + dest, only_move: $("only-move").checked }),
+    body: JSON.stringify({ position_id: position.id, move: orig + dest, only_move: $("only-move").checked }),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    $("result").textContent = `Error: ${data.detail}`;
+  if (!got.ok) {
+    $("result").textContent = `Error: ${got.error}`;
     return;
   }
-  showResult(data, orig, dest);
+  result = got.data;
+  showResult();
 }
 
-function showResult(data, orig, dest) {
-  const shapes = data.top.map((line, i) => ({
-    orig: line.uci.slice(0, 2),
-    dest: line.uci.slice(2, 4),
-    brush: BRUSHES[i],
-  }));
-  if (!data.in_top) shapes.push({ orig, dest, brush: "red" });
+function drawArrows() {
+  const showAll = $("show-all").checked;
+  const moves = showAll ? result.acceptable : result.arrows;
+  const shapes = moves.map((m, i) => arrow(m, BRUSHES[i] ?? MORE_BRUSH));
+  if (result.second_best) shapes.push(arrow(result.second_best, SECOND_BRUSH));
   cg.setAutoShapes(shapes);
+}
 
-  const verdict = data.in_top
-    ? `Your move <b>${escapeHtml(data.player.san)}</b> is engine move #${data.rank}.`
-    : `Your move <b>${escapeHtml(data.player.san)}</b> is not in the top ${data.top.length}.`;
-  const rows = data.top
-    .map(
-      (line, i) =>
-        `<li class="${BRUSHES[i]}"><b>${escapeHtml(line.san)}</b> ${formatScore(line.score)}` +
-        ` <span class="pv">${escapeHtml(line.pv.join(" "))}</span></li>`,
-    )
+function showResult() {
+  const v = result.verdict;
+  const rows = result.arrows
+    .map((m, i) => `<li class="${BRUSHES[i]}"><b>${escapeHtml(m.san)}</b> ${formatScore(m)}</li>`)
     .join("");
-  const gap = data.gap_cp === null ? "n/a" : (data.gap_cp / 100).toFixed(2);
-  const claim = data.only_move_claim ? "You said: only good move." : "You said: not an only-move position.";
+  const second = result.second_best
+    ? `<p class="second">Red arrow, not acceptable: <b>${escapeHtml(result.second_best.label)}</b>
+       (${formatScore(result.second_best)}).</p>`
+    : "";
+  const claim = result.only_move_claim ? "You said: only good move." : "You said: not an only-move position.";
 
   $("result").innerHTML = `
-    <p>${verdict}</p>
-    <p>Your move: ${formatScore(data.player.score)} · lost <b>${(data.loss_cp / 100).toFixed(2)}</b> pawns vs the best move.</p>
+    <p class="verdict ${v.acceptable ? "good" : "bad"}"><b>${escapeHtml(v.san)}</b>: ${escapeHtml(v.text)}</p>
+    <p class="small">Your move: ${formatScore(result.player)}</p>
+    <p>${escapeHtml(result.count_text)}.</p>
     <ol class="top">${rows}</ol>
-    <p class="small">${claim} Gap between best and 2nd best: ${gap} pawns.</p>`;
+    ${second}
+    <p class="small">${claim}</p>`;
+
+  const more = result.acceptable.length > result.arrows.length;
+  $("show-all-label").hidden = !more;
+  $("show-all-text").textContent = `Show all ${result.acceptable.length} acceptable moves`;
+  drawArrows();
 }
 
-$("next").addEventListener("click", loadPosition);
+$("show-all").addEventListener("change", () => result && drawArrows());
+$("next").addEventListener("click", () => {
+  if (location.search) history.replaceState(null, "", location.pathname); // leave ?id= behind
+  loadPosition();
+});
 loadPosition();

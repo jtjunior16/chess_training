@@ -1,8 +1,8 @@
 # Feature spec: Position pipeline (bank, phase labels, importers, batch analysis)
 
-**Last revised:** 2026-11-11T12:21-08:00
+**Last revised:** 2026-11-16T11:42-08:00
 
-**Status: in progress** (steps 1–5 built: the position bank tables and the phase labeller on 2026-11-09; the opening and puzzle importers and batch analysis on 2026-11-11. The full analysis run and step 6 are still to go)
+**Status: in progress** (steps 1–5 built: the position bank tables and the phase labeller on 2026-11-09; the opening and puzzle importers and batch analysis on 2026-11-11. The full analysis run finished on 2026-11-11: all 12,715 positions with legal moves are scored. Step 6 is in progress: the game reads from the bank as of 2026-11-16; recording attempts and the Stats page are still to go)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 
@@ -19,7 +19,7 @@ Fill a Postgres **position bank** with training positions: named-opening positio
 | 3 | `feat:` opening importer | Small source (about 3,500 lines), so it's the first end-to-end test. |
 | 4 | `feat:` puzzle importer | A filtered, stratified sample of 5,000 (see §5). |
 | 5 | `feat:` batch engine analysis | Scores every legal move and stores raw scores. |
-| 6 | `feat:` the game reads from the bank | Replaces the hardcoded `chess_training/positions.py`. |
+| 6 | `feat:` the game reads from the bank | Replaces the hardcoded `chess_training/positions.py`. Split into 3 PRs (2026-11-16): the game from the bank with the move acceptance §8 display, then recording attempts, then the Stats page. |
 
 Move acceptance (its own spec) comes after step 5.
 
@@ -136,7 +136,7 @@ Lichess's own puzzle phase tags are not used as labels. A test or report compare
   - Puzzle middlegames: 3.3 s, with 34 legal moves and 1.9 sent deep.
   - Puzzle endgames: 0.9 s, with 22 legal moves and 2.6 sent deep.
   - Opening positions cost the most because many moves stay within 15 win-% of the best.
-  - Two positions have no legal moves: the checkmates that end the named lines "Barnes Opening: Fool's Mate" and "Scotch Game: Sea-Cadet Mate". Analysis skips them and reports them. The game must never serve them (step 6).
+  - Two positions have no legal moves: the checkmates that end the named lines "Barnes Opening: Fool's Mate" and "Scotch Game: Sea-Cadet Mate". Analysis skips them and reports them. The game must never serve them (step 6). **Built 2026-11-16:** the game serves only positions with stored scores, which leaves these two out. The positions one move earlier, with the mate to find, are served.
   - The stored `depth` is the depth Stockfish reports reaching, which must be at least the target. A position that fails is logged and left pending, and the run carries on.
   - **Stop and resume (2026-11-11, the user's request):** the full run can be done in sessions of any length. Ctrl+C (or Ctrl+Break) stops the workers and their Stockfish processes and prints the progress so far. A save in progress is rolled back as a whole. Running the same command again continues.
 
