@@ -143,7 +143,7 @@ def move_result(acc: Acceptance, uci: str, settings: GameSettings) -> dict:
         second = {
             **_move(s),
             "win_loss": loss,
-            "label": f"{s.san}: misses the mate" if misses_mate else f"{s.san}: −{loss:.0f} win-%",
+            "label": f"{s.san}: misses the mate" if misses_mate else f"{s.san}: −{loss:.1f} win-%",
         }
     return {
         "verdict": {**asdict(verdict), "text": verdict.text()},
