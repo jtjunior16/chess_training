@@ -7,8 +7,8 @@
   - shown all-time and over the last `recent_window` attempts in each group;
   - groups below `min_attempts` show "not enough data yet";
   - broken down by phase, opening family, side, difficulty and puzzle theme;
-  - the "only good move" claim as claim accuracy and spotting rate;
   - challenge-mode repeats are left out.
+  There is no "only good move" claim: it was removed on 2026-11-16 (§4).
 - `recompute_attempts()` re-judges stored attempts after G, L or blunder_line change (§7; the
   spec's placeholder answer is to recompute).
 
@@ -103,8 +103,7 @@ class AttemptResult:
     kind: str  # acceptable / close miss / blunder
     verdict_text: str
     win_loss: float
-    only_move: bool  # the position is an only-move position (the claim's right answer)
-    claim_correct: bool | None  # None if the player didn't claim
+    only_move: bool  # the position is an only-move position (difficulty bucket "1")
 
 
 def record_attempt(
@@ -114,7 +113,6 @@ def record_attempt(
     *,
     mode: str = "normal",
     challenge_repeat: bool = False,
-    claimed_only_move: bool = False,
     acceptance_settings: AcceptanceSettings | None = None,
     scoring_settings: ScoringSettings | None = None,
     engine_version: str | None = None,
@@ -137,7 +135,9 @@ def record_attempt(
             mode=mode,
             challenge_repeat=challenge_repeat,
             side=side,
-            claimed_only_move=claimed_only_move,
+            # The claim was removed (scoring §4, 2026-11-16). Migration 0004 drops this column;
+            # until then it is NOT NULL, so write false.
+            claimed_only_move=False,
             result=kind,
             win_loss=verdict.win_loss,
             engine_version=version,
@@ -150,7 +150,6 @@ def record_attempt(
         verdict_text=verdict.text(),
         win_loss=verdict.win_loss,
         only_move=acc.only_move,
-        claim_correct=(claimed_only_move == acc.only_move) if claimed_only_move else None,
     )
 
 
@@ -202,16 +201,12 @@ def recompute_attempts(
 
 @dataclass(frozen=True)
 class Figures:
-    """Accuracy and claim figures for one group over one window of attempts."""
+    """Accuracy figures for one group over one window of attempts."""
 
     attempts: int
     acceptable: float | None  # shares in %, None when attempts < min_attempts
     close_miss: float | None
     blunder: float | None
-    claims: int
-    claim_accuracy: float | None  # correct claims / claims, None below min_attempts claims
-    only_move_seen: int
-    spotting_rate: float | None  # correct claims / only-move positions seen
 
     def to_dict(self) -> dict:
         return dict(self.__dict__)
@@ -220,8 +215,6 @@ class Figures:
 @dataclass(frozen=True)
 class _Row:
     result: str
-    claimed: bool
-    only_move: bool
     groups: dict[str, tuple[str, ...]]  # breakdown -> the groups this attempt belongs to
 
 
@@ -233,18 +226,11 @@ def figures(rows: list[_Row], min_attempts: int) -> Figures:
     n = len(rows)
     enough = n >= min_attempts
     counts = {k: sum(1 for r in rows if r.result == k) for k in (ACCEPTABLE, CLOSE_MISS, BLUNDER)}
-    claims = [r for r in rows if r.claimed]
-    only = [r for r in rows if r.only_move]
-    correct = sum(1 for r in claims if r.only_move)
     return Figures(
         attempts=n,
         acceptable=_pct(counts[ACCEPTABLE], n, enough),
         close_miss=_pct(counts[CLOSE_MISS], n, enough),
         blunder=_pct(counts[BLUNDER], n, enough),
-        claims=len(claims),
-        claim_accuracy=_pct(correct, len(claims), len(claims) >= min_attempts),
-        only_move_seen=len(only),
-        spotting_rate=_pct(correct, len(only), len(only) >= min_attempts),
     )
 
 
@@ -264,12 +250,11 @@ def load_rows(
     """Counted attempts (challenge repeats left out, §5), oldest first, with their groups.
 
     Also returns how many counted attempts were skipped because their position has no
-    scores for `engine_version` (difficulty and only-move can't be worked out)."""
+    scores for `engine_version` (difficulty can't be worked out)."""
     q = (
         select(
             attempts.c.position_id,
             attempts.c.result,
-            attempts.c.claimed_only_move,
             attempts.c.side,
             positions.c.phase,
             positions.c.opening_name,
@@ -301,8 +286,6 @@ def load_rows(
         rows.append(
             _Row(
                 result=r.result,
-                claimed=r.claimed_only_move,
-                only_move=sizes[r.position_id] == 1,
                 groups={
                     "phase": (r.phase,),
                     "opening family": (family,) if family else (),
@@ -355,27 +338,11 @@ def stats(
 
 def _fmt(f: dict) -> str:
     if f["acceptable"] is None:
-        acc = f"{NOT_ENOUGH} ({f['attempts']})"
-    else:
-        acc = (
-            f"{f['acceptable']:.0f}% acceptable · {f['close_miss']:.0f}% close misses · "
-            f"{f['blunder']:.0f}% blunders ({f['attempts']})"
-        )
-    claim = (
-        "no claims yet"
-        if f["claims"] == 0
-        else (
-            f"claims right {f['claim_accuracy']:.0f}%"
-            if f["claim_accuracy"] is not None
-            else f"claims: {NOT_ENOUGH}"
-        )
+        return f"{NOT_ENOUGH} ({f['attempts']})"
+    return (
+        f"{f['acceptable']:.0f}% acceptable · {f['close_miss']:.0f}% close misses · "
+        f"{f['blunder']:.0f}% blunders ({f['attempts']})"
     )
-    spot = (
-        f"spotted {f['spotting_rate']:.0f}%"
-        if f["spotting_rate"] is not None
-        else f"spotting: {NOT_ENOUGH}"
-    )
-    return f"{acc}; {claim}; {spot}"
 
 
 def render(s: dict) -> str:

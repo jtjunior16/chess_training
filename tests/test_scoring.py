@@ -106,12 +106,11 @@ def test_record_attempt_judges_and_stores(conn, sc):
     )
 
 
-def test_claim_correctness(conn, sc):
+def test_attempt_result_says_whether_the_position_was_only_move(conn, sc):
     only = add_position(conn, "sc-only", [("best", 200, None), ("x", 10, None)])
     many = add_position(conn, "sc-many", [("a", 20, None), ("b", 20, None)])
-    assert rec(conn, only, "best", sc, claimed_only_move=True).claim_correct is True
-    assert rec(conn, many, "a", sc, claimed_only_move=True).claim_correct is False
-    assert rec(conn, many, "a", sc).claim_correct is None
+    assert rec(conn, only, "best", sc).only_move is True
+    assert rec(conn, many, "a", sc).only_move is False
 
 
 def test_missed_mate_is_recorded_as_a_blunder(conn, sc):
@@ -157,16 +156,14 @@ def test_challenge_repeats_are_stored_but_not_counted(conn, sc):
     assert n == 3
 
 
-def test_claim_accuracy_and_spotting_rate(conn, sc):
-    only = add_position(conn, "sc-c-only", [("best", 200, None), ("x", 10, None)])
-    many = add_position(conn, "sc-c-many", [("a", 20, None), ("b", 20, None)])
-    rec(conn, only, "best", sc, claimed_only_move=True)  # correct claim
-    rec(conn, only, "best", sc)  # missed
-    rec(conn, many, "a", sc, claimed_only_move=True)  # wrong claim
-    rec(conn, many, "a", sc)  # correctly left blank
-    f = get_stats(conn, sc)["overall"]["all_time"]
-    assert (f["claims"], f["claim_accuracy"]) == (2, 50.0)
-    assert (f["only_move_seen"], f["spotting_rate"]) == (2, 50.0)
+def test_no_claim_figures(conn, sc):
+    # The "only good move" claim was removed (scoring §4, 2026-11-16).
+    pid = add_position(conn, "sc-no-claim", [("best", 200, None), ("x", 10, None)])
+    rec(conn, pid, "best", sc)
+    rec(conn, pid, "x", sc)
+    s = get_stats(conn, sc)
+    assert set(s["overall"]["all_time"]) == {"attempts", "acceptable", "close_miss", "blunder"}
+    assert "claim" not in render(s) and "spott" not in render(s)
 
 
 def test_breakdowns(conn, sc):

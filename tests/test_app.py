@@ -103,6 +103,7 @@ def test_index_serves_the_board_page():
     res = TestClient(app).get("/")
     assert res.status_code == 200
     assert 'id="board"' in res.text and 'id="show-all"' in res.text
+    assert 'id="only-move"' not in res.text  # the checkbox was removed (scoring §4)
 
 
 def test_position_by_id_includes_fen_dests_and_labels(client, bank):
@@ -127,15 +128,13 @@ def test_position_without_scores_is_not_served(client, bank):
 
 
 def test_best_move_in_an_only_move_position(client, bank):
-    body = client.post(
-        "/api/move", json={"position_id": bank["mate"], "move": "d1d8", "only_move": True}
-    ).json()
+    body = client.post("/api/move", json={"position_id": bank["mate"], "move": "d1d8"}).json()
     assert body["verdict"]["acceptable"] and body["verdict"]["text"] == "Acceptable (1st of 1)"
     assert body["count_text"] == "1 move was acceptable here"
     assert [m["san"] for m in body["arrows"]] == ["Rd8#"]
     assert body["second_best"]["san"] == "h3"
     assert body["second_best"]["label"] == "h3: misses the mate"
-    assert body["only_move_claim"] is True
+    assert "only_move_claim" not in body  # the claim was removed (scoring §4)
 
 
 def test_acceptable_move_without_an_arrow(client, bank):

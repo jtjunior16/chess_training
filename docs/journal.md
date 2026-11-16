@@ -1,6 +1,13 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-16 (design decisions built: G = L = 5, buckets, no claim)
+- The first round trip through the design tab: 3 specs came back in the inbox at 12:45, each based on main's copy. They were imported in #27, and the workflow was recorded in #28.
+- #29 put G = L = 5 and the four buckets in `config.yaml`. The tuning report then reproduced the spec's figures exactly (openings 14% only-move, median 6). An analysis config test had assumed L = 6 (deep_margin 11 < 2 × L); with L = 5 the minimum is 10.
+- Four buckets needed no code: `ScoringSettings.difficulty()` was already written for any number of boundaries.
+- Removed the "only good move" checkbox from the page, the API and the scoring figures. Its column goes in a separate `data:` PR (migration 0004), so the code first stops using it, then the schema drops it.
+- `gh pr checks --watch` right after a push can report "no checks" before CI registers the run. Branch protection then refused the merge, correctly. Wait a few seconds before watching.
+
 ## 2026-11-16 (the game reads from the bank)
 - Docker failed again with `ERROR_NO_SYSTEM_RESOURCES`, although `.wslconfig` (3 GB) was still in place, 10 GB of commit was free and no `vmmem` was stuck. `wsl --shutdown`, then starting Docker Desktop again, fixed it without a reboot. The PC had been up for a week.
 - The full analysis had already finished on 2026-11-11 (11:54–16:33): 12,715 positions and 399,797 scored moves. STATUS.md still said 172 because it was saved before the run.

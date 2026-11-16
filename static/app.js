@@ -58,8 +58,6 @@ async function loadPosition() {
   $("result").innerHTML = "";
   $("show-all-label").hidden = true;
   $("show-all").checked = false;
-  $("only-move").checked = false;
-  $("only-move").disabled = false;
 
   $("meta").textContent = [position.phase, position.opening].filter(Boolean).join(" · ");
   // A badge in the side's own colour, so it's clear at a glance who the player is.
@@ -88,14 +86,13 @@ async function loadPosition() {
 
 async function onMove(orig, dest) {
   cg.set({ movable: { color: undefined, dests: new Map() } }); // lock the board
-  $("only-move").disabled = true;
   $("result").hidden = false;
   $("result").textContent = "Checking…";
 
   const got = await fetchJson("/api/move", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ position_id: position.id, move: orig + dest, only_move: $("only-move").checked }),
+    body: JSON.stringify({ position_id: position.id, move: orig + dest }),
   });
   if (!got.ok) {
     $("result").textContent = `Error: ${got.error}`;
@@ -122,15 +119,13 @@ function showResult() {
     ? `<p class="second">Red arrow, not acceptable: <b>${escapeHtml(result.second_best.label)}</b>
        (${formatScore(result.second_best)}).</p>`
     : "";
-  const claim = result.only_move_claim ? "You said: only good move." : "You said: not an only-move position.";
 
   $("result").innerHTML = `
     <p class="verdict ${v.acceptable ? "good" : "bad"}"><b>${escapeHtml(v.san)}</b>: ${escapeHtml(v.text)}</p>
     <p class="small">Your move: ${formatScore(result.player)}</p>
     <p>${escapeHtml(result.count_text)}.</p>
     <ol class="top">${rows}</ol>
-    ${second}
-    <p class="small">${claim}</p>`;
+    ${second}`;
 
   const more = result.acceptable.length > result.arrows.length;
   $("show-all-label").hidden = !more;

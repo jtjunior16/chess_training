@@ -123,7 +123,6 @@ def get_position(conn: DbConn, cfg: Config, id: int | None = None) -> dict:
 class MoveRequest(BaseModel):
     position_id: int
     move: str  # UCI, e.g. "e2e4"; a missing promotion piece defaults to queen
-    only_move: bool = False  # the player's "this is the only good move" claim
 
 
 def parse_move(board: chess.Board, uci: str) -> chess.Move:
@@ -161,7 +160,7 @@ def post_move(
         result = move_result(acc, move.uci(), cfg.game)
     except ValueError as exc:  # a legal move without a stored score: the analysis is incomplete
         raise HTTPException(409, str(exc)) from exc
-    return {**result, "only_move_claim": req.only_move}
+    return result
 
 
 @app.get("/api/stats")
