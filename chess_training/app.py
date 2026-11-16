@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import Connection
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 
 from chess_training.acceptance import AcceptanceSettings, acceptable_set, load_moves
 from chess_training.config import load_config
@@ -42,8 +42,11 @@ app = FastAPI(title="chess_training")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
-@app.exception_handler(SQLAlchemyError)
-def _database_error(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+@app.exception_handler(OperationalError)
+@app.exception_handler(InterfaceError)
+def _database_error(request: Request, exc: DBAPIError) -> JSONResponse:
+    """The database is down or unreachable. Other database errors (a constraint violation, a
+    bad query) are bugs and stay 500s, so they don't look like an outage."""
     return JSONResponse(
         status_code=503, content={"detail": f"Database unavailable: {type(exc).__name__}"}
     )
@@ -101,7 +104,10 @@ def index() -> FileResponse:
 
 @app.get("/api/position")
 def get_position(conn: DbConn, cfg: Config, id: int | None = None) -> dict:
-    if id is None:
+    picked = id is None
+    if picked:
+        # Lists every playable id (~90 ms on the full bank). Fine locally; cache it if the
+        # bank or the traffic grows.
         try:
             id = pick_position_id(playable_ids(conn, cfg.engine_version), cfg.game, _rng)
         except LookupError as exc:
@@ -109,7 +115,7 @@ def get_position(conn: DbConn, cfg: Config, id: int | None = None) -> dict:
     row = load_position(conn, id)
     if row is None:
         raise HTTPException(404, f"Unknown position id: {id}")
-    if not is_playable(conn, id, cfg.engine_version):
+    if not picked and not is_playable(conn, id, cfg.engine_version):
         raise HTTPException(404, f"Position {id} has no stored scores (or no legal moves)")
     return position_payload(row)
 

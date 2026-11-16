@@ -6,7 +6,7 @@ _Last saved: 2026-11-16 11:50 · Overwritten by /project-format-toolkit:save-sta
 - Stack: FastAPI + python-chess, Postgres 16 in Docker, Stockfish 19 (pinned, `scripts/get_stockfish.py`) used only by the batch analysis, chessground 9.2.1 from a CDN. License GPL-3.0-or-later.
 - Position bank: 7,717 opening and 5,000 puzzle positions. The full analysis finished on 2026-11-11: every position with legal moves (12,715) is scored. The 2 checkmate boards are never served.
 - Specs in `specs/`: challenge mode = **ready**; position pipeline = **in progress** (step 6 part 1 of 3 built); move acceptance = **in progress** (everything built; G and L are placeholders); scoring = **in progress** (built; recording real moves and the Stats page are step 6 parts 2 and 3). `specs/spec_log.md` has the history.
-- Design runs in a second Claude Code tab. It reads specs from main and writes new or updated specs only to `C:\Users\jtjun\code\chess_design_inbox\` (outside the repo). The dev tab imports them by file name on a `docs/` branch. The full-bank tuning report is there: `acceptance_report_2026-11-16.txt`.
+- Design runs in a second Claude Code tab. It reads specs from main and writes new or updated specs only to `../chess_design_inbox/` (a folder next to the repo, outside it). The dev tab imports them by file name on a `docs/` branch. The full-bank tuning report is there: `acceptance_report_2026-11-16.txt`.
 
 ## Unfinished work
 - None.

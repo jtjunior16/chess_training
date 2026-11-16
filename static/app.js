@@ -24,16 +24,34 @@ function escapeHtml(s) {
 
 const arrow = (m, brush) => ({ orig: m.uci.slice(0, 2), dest: m.uci.slice(2, 4), brush });
 
+// fetch + JSON that never throws: errors (including non-JSON ones, e.g. a plain-text 500)
+// come back as { ok: false, error }.
+async function fetchJson(url, options) {
+  try {
+    const res = await fetch(url, options);
+    const text = await res.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      /* not JSON */
+    }
+    if (res.ok && data) return { ok: true, data };
+    return { ok: false, error: data?.detail ?? `${res.status} ${res.statusText}` };
+  } catch (e) {
+    return { ok: false, error: `cannot reach the server (${e.message})` };
+  }
+}
+
 async function loadPosition() {
   // ?id=123 in the page URL serves that bank position (handy for checking one).
   const id = new URLSearchParams(location.search).get("id");
-  const res = await fetch(id ? `/api/position?id=${encodeURIComponent(id)}` : "/api/position");
-  const data = await res.json();
-  if (!res.ok) {
-    $("prompt").textContent = `Error: ${data.detail}`;
+  const got = await fetchJson(id ? `/api/position?id=${encodeURIComponent(id)}` : "/api/position");
+  if (!got.ok) {
+    $("prompt").textContent = `Error: ${got.error}. Press "Next position" to try again.`;
     return;
   }
-  position = data;
+  position = got.data;
   result = null;
 
   $("result").hidden = true;
@@ -70,17 +88,16 @@ async function onMove(orig, dest) {
   $("result").hidden = false;
   $("result").textContent = "Checking…";
 
-  const res = await fetch("/api/move", {
+  const got = await fetchJson("/api/move", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ position_id: position.id, move: orig + dest, only_move: $("only-move").checked }),
   });
-  const data = await res.json();
-  if (!res.ok) {
-    $("result").textContent = `Error: ${data.detail}`;
+  if (!got.ok) {
+    $("result").textContent = `Error: ${got.error}`;
     return;
   }
-  result = data;
+  result = got.data;
   showResult();
 }
 

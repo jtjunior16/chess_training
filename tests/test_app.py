@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import insert
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from chess_training import app as app_module
 from chess_training.acceptance import AcceptanceSettings
@@ -170,6 +171,26 @@ def test_move_in_unknown_position_is_404(client):
 
 def test_stats_endpoint_answers(client):
     assert client.get("/api/stats").status_code == 200
+
+
+def test_unreachable_database_says_503_but_other_errors_stay_500():
+    def down():
+        raise OperationalError("SELECT 1", {}, Exception("connection refused"))
+        yield  # a generator dependency, like get_conn
+
+    def bug():
+        raise IntegrityError("INSERT", {}, Exception("constraint"))
+        yield
+
+    try:
+        app.dependency_overrides[get_conn] = down
+        res = TestClient(app).get("/api/position")
+        assert res.status_code == 503 and "OperationalError" in res.json()["detail"]
+        app.dependency_overrides[get_conn] = bug
+        res = TestClient(app, raise_server_exceptions=False).get("/api/position")
+        assert res.status_code == 500
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_without_a_database_the_api_says_503(monkeypatch):
