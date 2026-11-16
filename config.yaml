@@ -167,19 +167,20 @@ analysis:
   workers: 10          # parallel Stockfish processes, 1 thread each (engine.threads)
 
 move_acceptance:
-  # specs/move_acceptance_spec.md (status: ready). PLACEHOLDERS: G and L are still open
-  # there and get tuned from the tuning report (python -m chess_training.acceptance_report).
+  # specs/move_acceptance_spec.md §9: G = L = 5, decided 2026-11-16 (user, design chat).
+  # Tuning report: python -m chess_training.acceptance_report
   # L must stay <= analysis.deep_margin / 2 (checked when the analysis starts).
-  G: 5                 # break size, win-% points (placeholder)
-  L: 6                 # cap below the best move, win-% points (placeholder)
+  # The keys stay G and L for now (renaming them is an open question in the spec, §2).
+  G: 5                 # Max Single Drop: biggest drop allowed between two neighbouring moves, win-% points
+  L: 5                 # Max Below Best: how far below the best move a move may score, win-% points
 
 scoring:
-  # specs/scoring_spec.md (status: ready). PLACEHOLDER: blunder_line is an open question there,
-  # settled together with G and L. Must stay <= analysis.deep_margin.
-  blunder_line: 15     # win-% points below the best move: up to here a close miss, beyond a blunder
+  # specs/scoring_spec.md. blunder_line and the difficulty buckets decided 2026-11-16 (user).
+  # blunder_line must stay <= analysis.deep_margin.
+  blunder_line: 15     # win-% points below the best move: up to here a close miss, beyond a blunder (§6)
   recent_window: 50    # "recent" = the last 50 counted attempts in each group (decided, §2)
   min_attempts: 10     # fewer counted attempts than this: "not enough data yet" (decided, §2)
-  difficulty_buckets: [1, 4]   # PLACEHOLDER (open question): acceptable-set sizes 1 / 2-4 / 5+
+  difficulty_buckets: [1, 4, 9]   # acceptable-set sizes 1 / 2-4 / 5-9 / 10+ (decided, §3)
 
 game:
   # The game reads from the position bank (specs/position_pipeline_spec.md step 6).

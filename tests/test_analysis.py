@@ -55,7 +55,7 @@ def test_config_values_and_checks_pass():
     "section, key, value, message",
     [
         ("analysis", "deep_depth", 16, "must equal engine.depth"),
-        ("analysis", "deep_margin", 11, "at least 2 x L"),
+        ("analysis", "deep_margin", 9, "at least 2 x L"),  # L = 5, so the minimum is 10
         ("analysis", "quick_depth", 18, "below analysis.deep_depth"),
         ("engine", "threads", 2, "threads must be 1"),
     ],

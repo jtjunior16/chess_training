@@ -28,8 +28,8 @@ def mate(uci: str, n: int) -> ScoredMove:
 
 def test_settings_are_read_from_a_config_section():
     assert AcceptanceSettings.from_config({"G": 4, "L": 7.5}) == AcceptanceSettings(G=4, L=7.5)
-    live = AcceptanceSettings.from_config()
-    assert 0 < live.G and 0 < live.L
+    # Decided 2026-11-16 (move acceptance §9).
+    assert AcceptanceSettings.from_config() == AcceptanceSettings(G=5, L=5)
 
 
 # ---------------------------------------------------------------- the spec's worked examples (§3)

@@ -35,7 +35,7 @@ from chess_training.db import get_engine, position_moves, position_sources, posi
 
 SIZE_BUCKETS = [(1, 1, "1"), (2, 2, "2"), (3, 4, "3-4"), (5, 9, "5-9"), (10, 10_000, "10+")]
 GRID_G = (3, 4, 5, 6, 8)
-GRID_L = (4, 6, 7.5)
+GRID_L = (4, 5, 6, 7.5)
 
 
 @dataclass
@@ -134,7 +134,10 @@ def _share_table(df: pd.DataFrame, by: str) -> str:
 def grid(bank: list[BankPosition], base: AcceptanceSettings, title: str = "all positions") -> str:
     if not bank:
         return f"G/L grid ({title}): no positions."
-    lines = [f"only-move share / median set size, {title}, for G (rows) x L (columns):"]
+    lines = [
+        f"only-move share / median set size, {title}, "
+        "for G (Max Single Drop, rows) x L (Max Below Best, columns):"
+    ]
     header = "  G\\L " + "".join(f"{lv:>14}" for lv in GRID_L)
     lines.append(header)
     for g in GRID_G:
@@ -163,7 +166,8 @@ def report(
     df, losses, results = summarise(bank, settings, blunder_line)
     by_id = {p.id: p for p in bank}
     lines = [
-        f"Move acceptance tuning report: G = {settings.G:g}, L = {settings.L:g} (placeholders), "
+        f"Move acceptance tuning report: G (Max Single Drop) = {settings.G:g}, "
+        f"L (Max Below Best) = {settings.L:g}, "
         f"blunder_line = {blunder_line:g}",
         f"Positions with stored scores: {len(df):,} of {total_positions:,}"
         + ("" if len(df) == total_positions else " (analysis still running: partial data)"),
