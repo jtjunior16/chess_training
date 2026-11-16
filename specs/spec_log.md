@@ -7,15 +7,16 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Spec | Created | Last revised | Status | Built |
 |---|---|---|---|---|
-| [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-11T13:20-08:00 | ready | not started (needs the position bank) |
+| [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-16T12:45-08:00 | ready | not started (the position bank is ready) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-16T11:42-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run done; step 6 part 1 of 3 (the game reads from the bank, #26) |
-| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-11T14:26-08:00 | in progress | §1–§7 built (attempts table #24, scoring #25); the Stats page and real recording come with pipeline step 6 |
-| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-16T11:42-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display (#26); G and L still placeholders |
+| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-16T12:45-08:00 | in progress | §1–§7 built (attempts table #24, scoring #25); the 2026-11-16 decisions (blunder_line, four buckets, no claim) not built yet; the Stats page and real recording come with pipeline step 6 |
+| [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-16T12:45-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display (#26); G = L = 5 decided (§9), not yet in config.yaml |
 
 ## challenge_mode_spec.md
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T12:45-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). The "only good move" checkbox is removed from challenge mode too (§2 step 3, §3). Pass/fail is unchanged. | ready | #27 |
 | 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Pass/fail is decided: a move passes if it is in the acceptable set, the same function as normal mode's verdict (new §3). This replaces the "top 3 or ≤ 0.3 pawns" placeholder. | ready | #20 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-09T09:22-08:00, the time of the design chat's last content change). No other change. | ready | #8 |
 | 2026-11-09 | Updated from the design chat: when to compute the pawn fingerprint (backfill when challenge mode is built), only Lichess motif and mate-pattern tags count as themes, a "similar" puzzle shares at least one motif tag (more shared tags rank higher), and matching treats each unique position as one. | ready | #7 |
@@ -43,6 +44,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T12:45-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Decided by the user: `blunder_line` = 15 (§6); difficulty buckets 1 / 2–4 / 5–9 / 10+ (§3, config `[1, 4, 9]`); the "only good move" claim is removed with its figures (§4, §7), replacing the 2026-11-11 claim decision. Whether `attempts.claimed_only_move` is dropped is left to Claude Code. No data-dependent questions remain. | in progress | #27 |
 | 2026-11-11T14:26-08:00 | **Built §1–§7:** the `attempts` table (migration 0003, #24), plus `record_attempt()`, the figures (acceptable / close miss / blunder shares, all-time and recent, minimum 10, five breakdowns, claim accuracy and spotting rate, repeats left out), `recompute_attempts()`, a text report and `/api/stats` (#25). Nothing records real moves yet. That and the Stats page come with pipeline step 6. | in progress | #25 |
 | 2026-11-11T14:16-08:00 | Decided by the user (a question found while building move acceptance): when the best move forces mate, a move that doesn't mate is **always a blunder** (§6), even though win % puts +8 only about 5 points below a mate. Built as `acceptance.miss_kind()`, which the tuning report uses now and scoring will use. | ready | #23 |
 | 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:27 copy in main). Build now with the placeholders. Decided since 13:27: recent = the last 50 attempts per group, with groups under 10 attempts showing "not enough data yet" (§2); breakdowns by phase, opening family, side, difficulty and puzzle theme, with no source breakdown (§3); the "only good move" claim measured as claim accuracy and spotting rate (§4); challenge-mode repeats don't count (§5); misses split into close misses and blunders at `blunder_line` (§6); what each attempt records (§7). Open, with placeholders: `blunder_line` (15), the difficulty buckets, opening click-through, combined breakdowns, recomputing old attempts, the Stats page layout, and the claim in challenge mode. An intermediate 13:29 copy (adding §3) was reviewed but never committed; the design chat overwrote it before the commit. | ready | #21 |
@@ -52,6 +54,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T12:45-08:00 | Updated from the design chat (newer than the repo copy, which it was based on, so it replaced it). Decided by the user: **G = L = 5** (new §9, with the full-bank figures and options considered); G is called "Max Single Drop" and L "Max Below Best" in text and on screen (§2). New open question: rename the config keys (placeholder: keep `G` and `L`, names as comments). The checkbox mentions in §4 and §8 are gone. Caching question, measured by Claude Code on 2026-11-16: building a position's acceptable set takes 0.69 ms per move (median over 300 bank positions, max 2.6 ms), so "compute when needed" holds. | in progress | #27 |
 | 2026-11-16T11:42-08:00 | **Built §8:** what the player sees after moving: the verdict, the count line, arrows for at most 3 acceptable moves, a "show all" toggle, and in only-move positions the 2nd-best move in red with its loss ("misses the mate" when the best move mates). G and L are still placeholders; the full-bank tuning report is ready for the design chat. | in progress | #26 |
 | 2026-11-11T14:05-08:00 | **Built:** the acceptable-set rule (§2, with forced mates per §7), the verdict on a move (§4, e.g. "Acceptable (7th of 12)") and the §6 tuning report, plus a blunder_line split and G × L grids (overall and openings only). First numbers on partial data: puzzles 99% only-move, openings 15% with a median of 8 acceptable moves, so G and L should be tuned on openings. The §8 display waits for pipeline step 6. | in progress | #22 |
 | 2026-11-11T13:46-08:00 | **Status → ready** (from the design chat, newer than the 13:20 copy). Build now with the G and L placeholders. They are tuned in a later design chat from the §6 tuning report, run after the full analysis. Caching the set size is a performance detail to measure once built. | ready | #21 |
@@ -59,43 +62,35 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 | 2026-11-09 | Added the `Last revised` line (2026-11-06T18:43-08:00, the time of the design chat's last content change). No other change. | draft | #8 |
 | 2026-11-06 | Created: a gap-based acceptable-move rule in win %, replacing the fixed "top 3". G, L, mate handling and the challenge-mode pass rule are still open. | draft | #5 |
 
-## Pending design decisions (snapshot, 2026-11-11T12:55-08:00, updated 2026-11-11T13:46-08:00)
+## Pending design decisions (snapshot, 2026-11-16T12:51-08:00)
 _Every open question across the specs, for the design chat. In priority order. Each one runs on its stated placeholder until it is decided. Replace this snapshot when it goes out of date._
 
-**Already settled today, so skip these:** opening ECO per source row, the 11 unplaced puzzle tags (not themes), the endgame rule (a side without a queen may have up to 3 pieces), from the design chat at 13:20, forced mates, challenge mode's pass rule and what the player sees after moving (move acceptance §7–§8, challenge mode §3); missed mates always count as blunders (14:16, the user); and at 13:46 the scoring spec's §1–§7 (accuracy %, the recent window, breakdowns, the claim figures, which attempts count, and close misses vs blunders), with scoring and move acceptance both marked ready. The position pipeline spec has no open questions left.
+**Settled on 2026-11-16 (design chat):** G = L = 5, with the names "Max Single Drop" and "Max Below Best"; `blunder_line` = 15; difficulty buckets 1 / 2–4 / 5–9 / 10+; the "only good move" checkbox removed everywhere. Every earlier question settled on 2026-11-09 and 2026-11-11 is in the history above.
 
-### 1. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md), rule and tuning report **built** 14:05, G and L are placeholders)
-Tuning aid: `python -m chess_training.acceptance_report`. On partial data, puzzles are about 99% only-move positions whatever G and L are, so tune on the **opening grid**: L sets the set size (median 5 / 8 / 11 for L = 4 / 6 / 7.5), and G sets the only-move share (23% at G = 3 down to about 10% at G = 8).
-Batch analysis will have scored every legal move of all 12,715 bank positions by about 16:30 today. After that, the spec's §6 tuning report can show real acceptable-set sizes for any G and L.
+### 1. Needed for step 6 (the game reads from the bank; being worked on in the design chat now)
 | Question | Placeholder now |
 |---|---|
-| **G**, the break size between consecutive moves (win-% points) | 5 (`move_acceptance.G` in `config.yaml`) |
-| **L**, the cap below the best move (win-% points) | 6. It must stay at or below 7.5, because the analysis deep pass covers moves within 15 of the best and checks deep_margin ≥ 2 × L |
-| Cache the acceptable-set size per position, or compute it when needed? | Compute when needed |
+| Choosing the next position | Uniformly random over every playable bank position (`game.position_choice: random`), about 61% openings |
+| What the page shows before the move | The phase and the opening name only; puzzle theme tags hidden |
+| Promotion picker | Always a queen |
 
-Suggested approach: settle the *method* now (for example, "pick G and L so that X% of positions are only-move positions"), and pick the numbers once the tuning report has real data.
+Also open: showing how a position arose (`moves_to_position`, the opening name, the puzzle's source game), and feedback after a bad move (the bank stores no lines, so a refutation needs stored lines or one live engine call).
 
-### 2. Scoring ([scoring_spec.md](scoring_spec.md), **ready** since 13:46: build with placeholders). Progress is accuracy %, not points
-Needs real data (settle together with G and L):
+### 2. Move acceptance ([move_acceptance_spec.md](move_acceptance_spec.md))
 | Question | Placeholder now |
 |---|---|
-| Value of `blunder_line` (close miss vs blunder) | 15 win-% points, and it must stay ≤ the analysis deep_margin (15) |
-| Difficulty bucket boundaries | 1 / 2–4 / 5+ |
+| Rename the config keys `G` and `L` (e.g. `max_single_drop`, `max_below_best`)? | Keep `G` and `L`, names as comments |
+| Cache the acceptable-set size per position? | Compute when needed (measured: 0.69 ms per move) |
 
-Small design choices (they don't block the build):
+### 3. Scoring ([scoring_spec.md](scoring_spec.md)), small design choices
 | Question | Placeholder now |
 |---|---|
 | Click through from an opening family to its variations? | No |
-| Combined breakdowns (e.g. Caro-Kann as Black) | No |
+| Combined breakdowns (e.g. Caro-Kann as Black; would separate the only-move bucket from phase) | No |
 | Recompute old attempts when G, L or blunder_line change? | Yes, from the stored move and scores |
 | Where the figures are shown | One Stats page: overall, then one table per breakdown |
-| Should a wrong or missed claim also fail a challenge position? | No |
 
-Note from building (a question for the design chat, not a placeholder): the **recent spotting rate** needs 10 only-move positions within the last 50 attempts of a group. Openings are about 15% only-move positions, so 50 opening attempts hold about 7, and the recent opening spotting rate will usually show "not enough data yet". Options: a larger window for claim figures, or a lower minimum for them.
-
-**For the design chat to fix:** move acceptance's open-questions note says the tuning report runs after "the full analysis run (position pipeline step 6)". The full analysis run belongs to step 5. Step 6 is the game reading from the bank.
-
-### 3. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)
+### 4. Challenge mode ([challenge_mode_spec.md](challenge_mode_spec.md), ready)
 | Question | Placeholder now |
 |---|---|
 | Cap on run length (each failure adds 3 positions) | No cap. Max queue size is a config value, off by default |
@@ -103,13 +98,6 @@ Note from building (a question for the design chat, not a placeholder): the **re
 | Disguise repeats by flipping colours (middlegame and endgame only) | Off |
 | What the 15 are sampled from | All phases, uniformly at random |
 | Challenge length | 15 |
-
-### 4. Needed for step 6 (the game reads from the bank), no spec yet
-- **Choosing the next position:** random, by phase or opening, by difficulty (acceptable-set size), or something else. Placeholder if not decided: uniform random over bank positions that have legal moves.
-- **What the game shows after a move:** decided in move acceptance §8. Still open: should it also show how the position arose (`moves_to_position`, the opening name, the puzzle's source game)?
-- **Feedback after a bad move:** for example the refutation line. The bank stores scores but no lines (PVs). Showing lines would mean storing them, or running the engine live for that one move.
-- **Promotion picker** (the board currently can't choose a promotion piece).
-- Note, not a question: two bank positions are checkmates with no move to play (the ends of the named "Fool's Mate" and "Sea-Cadet Mate" lines). The game will skip them.
 
 ### 5. Later
 - Defining "quiet" positions taken from real Lichess games (needs its own spec).

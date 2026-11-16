@@ -1,6 +1,15 @@
 # Decisions
 _Newest first. One entry per decision: what was asked, what we chose, why. Never edit old entries. Add a new one that supersedes them._
 
+## 2026-11-16: G = L = 5, blunder_line = 15, four difficulty buckets, no "only good move" checkbox
+Asked: The questions that needed the full bank's data: the values of G and L (move acceptance), `blunder_line` and the difficulty buckets (scoring). Also whether the "only good move" checkbox is worth keeping, now that the data shows what it measures.
+Chose (user, in the design chat; specs Last revised 2026-11-16T12:45-08:00):
+- **G = L = 5** win-% points (move acceptance §9). A move is acceptable if it loses at most 5 win-% against the best move, about half a pawn near equality. G has no effect while G ≥ L, but the gap test stays in the code. In text and on screen, G is called **"Max Single Drop"** and L **"Max Below Best"** (§2). Whether to rename the config keys is still open; the placeholder keeps `G` and `L` with the names as comments.
+- **`blunder_line` = 15** (scoring §6): a close miss loses more than 5 and at most 15 win-%, and a blunder loses more than 15.
+- **Difficulty buckets 1 / 2–4 / 5–9 / 10+** (scoring §3): `scoring.difficulty_buckets` becomes `[1, 4, 9]`.
+- **The "only good move" checkbox is removed everywhere** (scoring §4 and §7, move acceptance §4 and §8, challenge mode §2 and §3), together with the claim accuracy and spotting rate figures. This supersedes the 2026-11-11 scoring decision on the claim. Only-move positions remain: they are the "1" difficulty bucket, and they still show the 2nd-best move's red arrow.
+Why: See the "Why" lines in each spec. In short: one threshold is easy to explain and gives the same verdict for the same loss. With G = 3, an only-move position could hinge on a 0.33-pawn difference. A blunder should mean a clear loss of about 1.5 pawns or a dropped piece, and 15 is also where the depth-18 scoring ends. Four buckets split the openings into hard, moderate and easy. Every middlegame and endgame position is a puzzle and 99% of puzzles are only-move positions, so the checkbox there tested nothing, and showing it only in openings would give away whether a position is a puzzle.
+
 ## 2026-11-16: The game reads from the bank (pipeline step 6, part 1 of 3)
 Asked: How the game should serve bank positions and show move acceptance §8, and what to do about details no spec covers yet.
 Chose (plan approved by the user; details flagged in the PR):
