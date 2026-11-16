@@ -48,9 +48,15 @@ h1 {
 .top li.green::marker { color: #15781b; }
 .top li.blue::marker { color: #003088; }
 .top li.yellow::marker { color: #e68f00; }
-.pv {
-  color: #9a9a9a;
-  font-size: 0.85rem;
+.verdict.good { color: #8fd18f; }
+.verdict.bad { color: #f08a7e; }
+.second {
+  border-left: 3px solid #882020;
+  padding-left: 0.5rem;
+}
+.show-all {
+  display: block;
+  margin: 0 0 1rem;
 }
 button {
   font-size: 1rem;

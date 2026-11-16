@@ -1,8 +1,8 @@
 # Feature spec: Move acceptance (which moves are "OK" in a position)
 
-**Last revised:** 2026-11-11T14:05-08:00
+**Last revised:** 2026-11-16T11:42-08:00
 
-**Status: in progress** (2026-11-11: the rule (§2, §7), the verdict (§4) and the tuning report (§6) are built in `chess_training/acceptance.py` and `acceptance_report.py`. The §8 display comes with the game reading from the bank (position pipeline step 6). G and L are still placeholders, see the note under **Open questions**)
+**Status: in progress** (2026-11-11: the rule (§2, §7), the verdict (§4) and the tuning report (§6) are built in `chess_training/acceptance.py` and `acceptance_report.py`. The §8 display is built in `chess_training/game.py` and the board page (2026-11-16, position pipeline step 6). G and L are still placeholders, see the note under **Open questions**)
 
 > For Claude Code. Implement what's under **Decided**. Do **not** pick answers for anything under **Open questions**: use the stated placeholder, make it easy to change, and flag it. Record each decision in the project's decision log (Question → Choice → Why).
 >
@@ -90,6 +90,10 @@ This replaces the project's original "show the top 3 arrows" display.
 - **Only-move positions also show the 2nd-best move** with a red/grey arrow, labelled with what it loses (e.g. "Nf3: −12 win-%"). It is the only arrow that ever points at a move that isn't acceptable, and its colour must make that obvious. Why (the user's decision): it lets the player ask "would I have wanted that move, and why is it bad?", which is the judgment the "only good move" claim is about.
 
 Why: the user's decision. The old top 3 disagreed with the acceptable set: in an only-move position, moves 2 and 3 got arrows although they weren't acceptable; with many acceptable moves, a player's acceptable 7th-ranked move had no arrow and looked wrong. Arrows for every acceptable move (up to 15 or more) would clutter the board, hence the cap and the toggle.
+
+**Built 2026-11-16** (`chess_training/game.py`, `static/app.js`). The cap is `game.max_arrows: 3` in `config.yaml`. Details settled while building (Claude, flagged in the PR):
+- Arrows: green, blue and yellow for acceptable moves 1–3; "show all" adds the rest in pale green; the 2nd-best move in an only-move position is red. The toggle appears only when the set is larger than the cap.
+- When the best move forces mate and the 2nd-best doesn't, its label reads "h5: misses the mate" instead of a win-% loss, the same as the verdict (a +3.78 move is still about 80 win-%).
 
 ## Open questions (do not decide. Use the placeholder and make it configurable)
 

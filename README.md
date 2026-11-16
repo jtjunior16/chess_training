@@ -31,12 +31,13 @@ uv run --env-file .env python -m chess_training.scoring            # your accura
 ```
 
 ## Run the game
+Needs Postgres running (`docker compose up -d`) and a filled, analysed position bank (above).
 ```bash
-uv run uvicorn chess_training.app:app --reload
+uv run --env-file .env uvicorn chess_training.app:app --reload
 ```
-Then open http://localhost:8000. Each position takes about a second to analyse.
+Then open http://localhost:8000 (or http://localhost:8000/?id=51 for one bank position). The game serves a random bank position, judges your move from the stored scores (no engine runs while you play) and shows the verdict, how many moves were acceptable, and arrows for the best acceptable moves.
 
-Stack: FastAPI + python-chess + Stockfish (pinned in `config.yaml`) on the server, and a plain-JavaScript page with the [chessground](https://github.com/lichess-org/chessground) board (loaded from a CDN, no build step).
+Stack: FastAPI + python-chess on the server, scores from Stockfish (pinned in `config.yaml`) stored in Postgres by the batch analysis, and a plain-JavaScript page with the [chessground](https://github.com/lichess-org/chessground) board (loaded from a CDN, no build step).
 
 ## License
 GPL-3.0-or-later (see `LICENSE`). python-chess and chessground are GPL, so this project is too.

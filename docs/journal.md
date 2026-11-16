@@ -1,6 +1,14 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-16 (the game reads from the bank)
+- Docker failed again with `ERROR_NO_SYSTEM_RESOURCES`, although `.wslconfig` (3 GB) was still in place, 10 GB of commit was free and no `vmmem` was stuck. `wsl --shutdown`, then starting Docker Desktop again, fixed it without a reboot. The PC had been up for a week.
+- The full analysis had already finished on 2026-11-11 (11:54–16:33): 12,715 positions and 399,797 scored moves. STATUS.md still said 172 because it was saved before the run.
+- Full-bank tuning report (G = 5, L = 6): openings are 14% only-move with a median of 8 acceptable moves and 35% close misses. Puzzles are 99% only-move and all their misses are blunders. 1,849 positions have a forced mate as the best move. It goes to the design chat, which now runs in a second Claude Code tab: it reads specs from main and writes only to `C:\Users\jtjun\code\chess_design_inbox\`, outside the repo.
+- Built step 6, part 1: the game serves bank positions and shows the §8 display. Checked live: Fool's Mate (#51) gives "Qh4#: Acceptable (1st of 1)" with "h5: misses the mate" in red. The Sea-Cadet position (#4781) has 2 acceptable moves, Nd5# and Bg5+ (mate in 2).
+- Tests: `/api/stats`'s direct-call test now passes the rolled-back connection in, because the endpoint takes it as a dependency.
+- This Git Bash has no bare `python`. Run scripts with `uv run python`.
+
 ## 2026-11-11 (attempts table and scoring)
 - Migration 0003 adds `attempts` (#24). An attempted position can't be deleted (RESTRICT), which protects the player's history.
 - Built scoring §1–§7 (`chess_training/scoring.py`, #25): recording, the figures, the five breakdowns, the claim figures and recomputing, plus a CLI report and `/api/stats`. 16 tests on synthetic positions.
