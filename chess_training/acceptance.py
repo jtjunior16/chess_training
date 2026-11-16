@@ -10,7 +10,8 @@ and at most L below the best move (cap). Stop at the first move that fails eithe
 Forced mates (§7): if the best move forces mate, the acceptable set is exactly the moves that
 also force mate, at any length. G and L don't apply.
 
-G and L are placeholders in config.yaml (`move_acceptance:`) until tuned from the §6 report.
+G ("Max Single Drop") and L ("Max Below Best") are in config.yaml (`move_acceptance:`);
+both are 5, decided 2026-11-16 (§9). While G >= L the gap test never fires before the cap.
 """
 
 from __future__ import annotations

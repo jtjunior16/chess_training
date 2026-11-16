@@ -381,7 +381,8 @@ def _fmt(f: dict) -> str:
 def render(s: dict) -> str:
     st = s["settings"]
     lines = [
-        f"Accuracy (G = {st['G']:g}, L = {st['L']:g}, blunder_line = {st['blunder_line']:g}; "
+        f"Accuracy (G (Max Single Drop) = {st['G']:g}, L (Max Below Best) = {st['L']:g}, "
+        f"blunder_line = {st['blunder_line']:g}; "
         f"recent = last {st['recent_window']} attempts; at least {st['min_attempts']} needed)",
         "",
         f"Overall, all-time: {_fmt(s['overall']['all_time'])}",

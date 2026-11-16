@@ -79,7 +79,8 @@ def test_config_values():
 
 
 @pytest.mark.parametrize(
-    "size, label", [(1, "only-move"), (2, "2-4"), (4, "2-4"), (5, "5+"), (30, "5+")]
+    "size, label",
+    [(1, "only-move"), (2, "2-4"), (4, "2-4"), (5, "5-9"), (9, "5-9"), (10, "10+"), (30, "10+")],
 )
 def test_difficulty_buckets(size, label):
     assert ScoringSettings.from_config().difficulty(size) == label
@@ -257,4 +258,6 @@ def test_difficulty_buckets_through_stats(conn, sc):
     six = add_position(conn, "sc-six", [(f"m{i}", 20, None) for i in range(6)])
     rec(conn, two, "a", sc)
     rec(conn, six, "m0", sc)
-    assert set(get_stats(conn, sc)["breakdowns"]["difficulty"]) == {"2-4", "5+"}
+    twelve = add_position(conn, "sc-twelve", [(f"t{i:02d}", 20, None) for i in range(12)])
+    rec(conn, twelve, "t00", sc)
+    assert set(get_stats(conn, sc)["breakdowns"]["difficulty"]) == {"2-4", "5-9", "10+"}
