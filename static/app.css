@@ -1,3 +1,7 @@
+/* `hidden` must win over any `display` rule below (e.g. .show-all's display: block). */
+[hidden] {
+  display: none !important;
+}
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
