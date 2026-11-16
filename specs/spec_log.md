@@ -9,13 +9,14 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 |---|---|---|---|---|
 | [challenge_mode_spec.md](challenge_mode_spec.md) | 2026-11-06 | 2026-11-16T12:45-08:00 | ready | not started (the position bank is ready) |
 | [position_pipeline_spec.md](position_pipeline_spec.md) | 2026-11-06 | 2026-11-16T11:42-08:00 | in progress | steps 1–5 of 6 (tables #9, phase labeller #10, opening importer #11, puzzle importer #13, batch analysis #16); full analysis run done; step 6 part 1 of 3 (the game reads from the bank, #26) |
-| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-16T12:45-08:00 | in progress | §1–§7 built (attempts table #24, scoring #25); blunder_line and four buckets in config.yaml (#29); removing the claim not built yet; the Stats page and real recording come with pipeline step 6 |
+| [scoring_spec.md](scoring_spec.md) | 2026-11-11 | 2026-11-16T12:45-08:00 | in progress | §1–§7 built (attempts table #24, scoring #25); blunder_line and four buckets in config.yaml (#29); the claim removed in code (PR pending), its column next; the Stats page and real recording come with pipeline step 6 |
 | [move_acceptance_spec.md](move_acceptance_spec.md) | 2026-11-06 | 2026-11-16T12:45-08:00 | in progress | rule, verdict and tuning report built (#22); the §8 display (#26); G = L = 5 in config.yaml (§9, #29) |
 
 ## challenge_mode_spec.md
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T13:02-08:00 | Checkbox removal (§2, §3) built for the shared board page, which challenge mode will use. Challenge mode itself is not built. | ready | (pending) |
 | 2026-11-16T12:45-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). The "only good move" checkbox is removed from challenge mode too (§2 step 3, §3). Pass/fail is unchanged. | ready | #27 |
 | 2026-11-11T13:20-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Pass/fail is decided: a move passes if it is in the acceptable set, the same function as normal mode's verdict (new §3). This replaces the "top 3 or ≤ 0.3 pawns" placeholder. | ready | #20 |
 | 2026-11-09 | Added the `Last revised` line (2026-11-09T09:22-08:00, the time of the design chat's last content change). No other change. | ready | #8 |
@@ -44,6 +45,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T13:02-08:00 | **Built §4 (claim removed):** the claim figures are gone from `/api/stats` and the text report, and `record_attempt()` no longer takes a claim. Until migration 0004 drops `attempts.claimed_only_move`, it writes false. | in progress | (pending) |
 | 2026-11-16T12:57-08:00 | **Built §3 and §6 values:** `scoring.difficulty_buckets: [1, 4, 9]` (four buckets, no code change needed) and `blunder_line: 15` marked decided in `config.yaml`. Recomputing stored attempts changed 0 (none exist yet). | in progress | #29 |
 | 2026-11-16T12:45-08:00 | Updated from the design chat (newer than the repo copy, so it replaced it). Decided by the user: `blunder_line` = 15 (§6); difficulty buckets 1 / 2–4 / 5–9 / 10+ (§3, config `[1, 4, 9]`); the "only good move" claim is removed with its figures (§4, §7), replacing the 2026-11-11 claim decision. Whether `attempts.claimed_only_move` is dropped is left to Claude Code. No data-dependent questions remain. | in progress | #27 |
 | 2026-11-11T14:26-08:00 | **Built §1–§7:** the `attempts` table (migration 0003, #24), plus `record_attempt()`, the figures (acceptable / close miss / blunder shares, all-time and recent, minimum 10, five breakdowns, claim accuracy and spotting rate, repeats left out), `recompute_attempts()`, a text report and `/api/stats` (#25). Nothing records real moves yet. That and the Stats page come with pipeline step 6. | in progress | #25 |
@@ -55,6 +57,7 @@ _**Last revised** is the `Last revised` line at the top of each spec (ISO 8601 l
 
 | Date | Event | Status after | PR |
 |---|---|---|---|
+| 2026-11-16T13:02-08:00 | **Built §4 and §8 (checkbox removed):** the board page has no "only good move" checkbox and no "You said…" line, and `/api/move` no longer takes `only_move`. The 2nd-best red arrow stays. | in progress | (pending) |
 | 2026-11-16T12:57-08:00 | **Built §9:** `move_acceptance.L: 5` (G stays 5), with Max Single Drop and Max Below Best as comments; the tuning report and the scoring text report use the names. The report reproduces §9's figures: openings 14% only-move, median size 6, 37% with 10+. | in progress | #29 |
 | 2026-11-16T12:45-08:00 | Updated from the design chat (newer than the repo copy, which it was based on, so it replaced it). Decided by the user: **G = L = 5** (new §9, with the full-bank figures and options considered); G is called "Max Single Drop" and L "Max Below Best" in text and on screen (§2). New open question: rename the config keys (placeholder: keep `G` and `L`, names as comments). The checkbox mentions in §4 and §8 are gone. Caching question, measured by Claude Code on 2026-11-16: building a position's acceptable set takes 0.69 ms per move (median over 300 bank positions, max 2.6 ms), so "compute when needed" holds. | in progress | #27 |
 | 2026-11-16T11:42-08:00 | **Built §8:** what the player sees after moving: the verdict, the count line, arrows for at most 3 acceptable moves, a "show all" toggle, and in only-move positions the 2nd-best move in red with its loss ("misses the mate" when the best move mates). G and L are still placeholders; the full-bank tuning report is ready for the design chat. | in progress | #26 |
