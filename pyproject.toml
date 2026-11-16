@@ -1,7 +1,7 @@
 [project]
 name = "chess_training"
 version = "0.1.0"
-description = "A chess training game: the player finds the best move in a position and is scored against the engine's top 3 moves, with a bonus for spotting 'only move' positions."
+description = "A chess training game: the player finds a good move in a position and is judged against the engine's acceptable moves for that position, with accuracy tracked by phase, opening and difficulty."
 requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 dependencies = [

@@ -1,6 +1,6 @@
 # chess_training
 
-A chess training game: the player finds the best move in a position and is scored against the engine's top 3 moves, with a bonus for spotting 'only move' positions.
+A chess training game: the player finds a good move in a position and is judged against the engine's acceptable moves for that position, with accuracy tracked by phase, opening and difficulty.
 
 ## Setup
 ```bash
@@ -49,9 +49,11 @@ This repo was scaffolded with the **project-format-toolkit** plugin. Say "start 
 - Current status: `STATUS.md` · Decisions: `docs/decisions.md` · Journal: `docs/journal.md`
 
 ## Game concept (initial)
+_The first idea, kept as history. The current design is in `specs/`: the top 3 became each position's acceptable set (move acceptance spec), and the checkbox was removed._
+
 - The app shows the player a chess position on a board; the player makes a move.
-- After the move, the app reveals the engine's top 3 moves.
-- Before moving, the player can tick **"this is the only good move"** for positions where exactly one move keeps the evaluation and every other move makes it worse.
+- After the move, the app reveals the engine's top 3 moves. (Replaced by the acceptable set, 2026-11-06.)
+- Before moving, the player can tick **"this is the only good move"** for positions where exactly one move keeps the evaluation and every other move makes it worse. (Removed 2026-11-16.)
 - A move outside the top 3 can still score if it doesn't make the position meaningfully worse. "Worse" is relative: +1.0 → +0.8 is a small loss, while +1.0 → +0.2 or −1.0 is a real one. Exact thresholds are still to be decided.
 - More features will follow.
 

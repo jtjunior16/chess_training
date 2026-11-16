@@ -1,5 +1,5 @@
 # chess_training
-A chess training game: the player finds the best move in a position and is scored against the engine's top 3 moves, with a bonus for spotting 'only move' positions.
+A chess training game: the player finds a good move in a position and is judged against the engine's acceptable moves for that position, with accuracy tracked by phase, opening and difficulty.
 
 @.claude/universal-rules.md
 @STATUS.md

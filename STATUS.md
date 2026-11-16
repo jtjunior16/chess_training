@@ -1,11 +1,11 @@
 # Status
-_Last saved: 2026-11-16 11:50 · Overwritten by /project-format-toolkit:save-state at the end of each session._
+_Last saved: 2026-11-16 13:10 · Overwritten by /project-format-toolkit:save-state at the end of each session._
 
 ## Where things stand
-- The game plays from the position bank: `uv run --env-file .env uvicorn chess_training.app:app --reload`, then open http://localhost:8000 (`?id=<n>` for one position). A random bank position; after the move: the verdict, the count of acceptable moves, arrows for up to 3 of them, a "show all" toggle, and the 2nd-best move in red in only-move positions (move acceptance §8). No engine runs while playing. Attempts aren't recorded yet.
+- The game plays from the position bank: `uv run --env-file .env uvicorn chess_training.app:app --reload`, then open http://localhost:8000 (`?id=<n>` for one position). A random bank position; after the move: the verdict, the count of acceptable moves, arrows for up to 3 of them, a "show all" toggle, and the 2nd-best move in red in only-move positions (move acceptance §8). No engine runs while playing, and there is no "only good move" checkbox. Attempts aren't recorded yet.
 - Stack: FastAPI + python-chess, Postgres 16 in Docker, Stockfish 19 (pinned, `scripts/get_stockfish.py`) used only by the batch analysis, chessground 9.2.1 from a CDN. License GPL-3.0-or-later.
 - Position bank: 7,717 opening and 5,000 puzzle positions. The full analysis finished on 2026-11-11: every position with legal moves (12,715) is scored. The 2 checkmate boards are never served.
-- Specs in `specs/`: challenge mode = **ready**; position pipeline = **in progress** (step 6 part 1 of 3 built); move acceptance = **in progress** (everything built; G = L = 5 decided and in `config.yaml`); scoring = **in progress** (built, with blunder_line 15 and four difficulty buckets; removing the "only good move" claim is in progress; recording real moves and the Stats page are step 6 parts 2 and 3). `specs/spec_log.md` has the history.
+- Specs in `specs/`: challenge mode = **ready**; position pipeline = **in progress** (step 6 part 1 of 3 built); move acceptance = **in progress** (everything built; G = L = 5 decided and in `config.yaml`); scoring = **in progress** (built, with blunder_line 15 and four difficulty buckets; the "only good move" claim removed, its column dropped by migration 0004; recording real moves and the Stats page are step 6 parts 2 and 3). `specs/spec_log.md` has the history.
 - Design runs in a second Claude Code tab. It reads specs from main and writes new or updated specs only to `../chess_design_inbox/` (a folder next to the repo, outside it). The dev tab imports them by file name on a `docs/` branch. The full-bank tuning report is there: `acceptance_report_2026-11-16.txt`.
 
 ## Unfinished work
