@@ -1,6 +1,10 @@
 # Journal
 _Newest first. Short entries as work happens: what was done, what was learned, what surprised us._
 
+## 2026-11-16 (win-% with one decimal)
+- At L = 5, a move 5.24 below the best read "lost 5 win-%", which looked like it was inside the cap. Verdicts and the red 2nd-best label now show one decimal (#33), e.g. #4671 h4 reads "lost 5.2 win-%".
+- The move acceptance spec's examples still use whole numbers; it's noted in the spec log for the design chat to update.
+
 ## 2026-11-16 (design decisions built: G = L = 5, buckets, no claim)
 - The first round trip through the design tab: 3 specs came back in the inbox at 12:45, each based on main's copy. They were imported in #27, and the workflow was recorded in #28.
 - #29 put G = L = 5 and the four buckets in `config.yaml`. The tuning report then reproduced the spec's figures exactly (openings 14% only-move, median 6). An analysis config test had assumed L = 6 (deep_margin 11 < 2 × L); with L = 5 the minimum is 10.
